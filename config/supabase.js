@@ -17,31 +17,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     site: SITE_URL,
-    // Configure all redirect URLs
-    redirectTo: AUTH_CALLBACK_URL,
-    // Specific configurations for different auth flows
-    verifyEmail: {
-      redirectTo: VERIFY_EMAIL_URL
-    },
+    // Update redirect configuration
+    redirectTo: RESET_PASSWORD_URL,
+    // Update password reset options
     passwordReset: {
-      redirectTo: RESET_PASSWORD_URL
+      redirectTo: RESET_PASSWORD_URL,
+      maxAge: 3600 // 1 hour in seconds
     },
-    // Allow multiple redirect URLs
+    // Simplified redirect URLs list
     allowedRedirectUrls: [
-      VERIFY_EMAIL_URL,
       RESET_PASSWORD_URL,
-      AUTH_CALLBACK_URL
-    ],
-    cookieOptions: {
-      domain: '.vercel.app',
-      path: '/',
-      sameSite: 'lax'
-    }
-  },
-  global: {
-    headers: {
-      'x-site-url': SITE_URL
-    }
+      VERIFY_EMAIL_URL,
+      AUTH_CALLBACK_URL,
+      // Add localhost for testing
+      'http://localhost:3000/html/auth/resetPassword.html'
+    ]
   }
 })
 
@@ -204,63 +194,25 @@ export const subscribeToUserStats = (userId, callback) => {
 // Add password reset helpers
 export const resetPassword = async (email) => {
   try {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${SITE_URL}/html/auth/resetPassword.html`
-    });
+    const { data, error } = await supabase.auth.resetPasswordForEmail(
+      email,
+      {
+        redirectTo: RESET_PASSWORD_URL,
+        captchaToken: undefined
+      }
+    );
 
     if (error) throw error;
 
     return { 
-      data, 
-      error: null,
-      message: 'Password reset instructions sent to your email' 
+      success: true,
+      message: 'Password reset link sent! Please check your email.' 
     };
   } catch (error) {
+    console.error('Reset password error:', error);
     return { 
-      data: null, 
-      error,
-      message: error.message || 'Failed to send reset instructions' 
-    };
-  }
-}
-
-export const verifyResetToken = async (token, type) => {
-  try {
-    const { data, error } = await supabase.auth.verifyOtp({
-      token,
-      type
-    });
-
-    if (error) throw error;
-
-    return { data, error: null };
-  } catch (error) {
-    return { 
-      data: null, 
-      error,
-      message: error.message || 'Invalid or expired reset token' 
-    };
-  }
-}
-
-export const updateUserPassword = async (password) => {
-  try {
-    const { data, error } = await supabase.auth.updateUser({
-      password
-    });
-
-    if (error) throw error;
-
-    return { 
-      data, 
-      error: null,
-      message: 'Password updated successfully' 
-    };
-  } catch (error) {
-    return { 
-      data: null, 
-      error,
-      message: error.message || 'Failed to update password' 
+      success: false,
+      message: error.message || 'Failed to send reset link' 
     };
   }
 }
