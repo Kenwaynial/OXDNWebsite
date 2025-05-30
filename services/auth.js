@@ -49,7 +49,7 @@ export const registerWithEmail = async (email, password, username) => {
         data: {
           username: username
         },
-        emailRedirectTo: `${window.location.origin}/html/verifyEmail.html`
+        emailRedirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
       }
     })
 
@@ -63,16 +63,18 @@ export const registerWithEmail = async (email, password, username) => {
       throw error
     }
 
-    // Create profile using the stored procedure
+    // Create profile using the new handle_registration function
     if (data.user) {
-      const { error: profileError } = await supabase.rpc('create_profile_for_user', {
-        user_id: data.user.id,
+      const { error: profileError } = await supabase.rpc('handle_registration', {
         user_email: email,
         user_metadata: { username }
       })
 
       if (profileError) {
         console.error('Profile creation error:', profileError)
+        if (profileError.code === '23505') {
+          throw new Error('This email is already registered. Please try logging in or use a different email.')
+        }
         throw new Error('Username is already taken. Please try a different username.')
       }
     }
