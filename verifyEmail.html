@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OXDN - Verify Email</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="stylesheet" href="css/verifyEmail.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="verification-card">
+            <div class="logo-container">
+                <img src="assets/logo.png" alt="OXDN Logo" class="logo">
+            </div>
+            
+            <h1>Verify Your Email</h1>
+            <p class="message">We've sent a verification email to your inbox. Please check your email and click the verification link to continue.</p>
+            
+            <div class="email-display">
+                <span id="userEmail">Loading...</span>
+            </div>
+
+            <div class="status-container">
+                <div class="status-icon">
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <p id="statusMessage">Waiting for verification...</p>
+            </div>
+
+            <div class="actions">
+                <button id="resendBtn" class="btn-resend">Resend Verification Email</button>
+                <button id="checkBtn" class="btn-check">Check Verification Status</button>
+                <button id="devModeBtn" class="btn-dev" style="display: none;">Go to Dashboard (Dev Mode)</button>
+            </div>
+
+            <div class="help-text">
+                <p>Didn't receive the email?</p>
+                <ul>
+                    <li>Check your spam folder</li>
+                    <li>Make sure the email address is correct</li>
+                    <li>Wait a few minutes and try again</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <script type="module">
+        import { auth } from './config/firebase.js';
+        import { onAuthStateChanged, checkEmailVerification, resendVerificationEmail } from './services/auth.js';
+
+        // Check if we're in development mode - simplified to match dashboard
+        const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        // Mock user data for development
+        const mockUserData = {
+            email: 'dev@example.com',
+            isEmailVerified: true
+        };
+
+        // UI Elements
+        const userEmail = document.getElementById('userEmail');
+        const statusMessage = document.getElementById('statusMessage');
+        const resendBtn = document.getElementById('resendBtn');
+        const checkBtn = document.getElementById('checkBtn');
+        const devModeBtn = document.getElementById('devModeBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+
+        // Helper Functions
+        function showLoading() {
+            loading.classList.add('active');
+        }
+
+        function hideLoading() {
+            loading.classList.remove('active');
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('show');
+            setTimeout(() => {
+                error.classList.remove('show');
+            }, 5000);
+        }
+
+        // Check verification status
+        async function checkVerification() {
+            try {
+                showLoading();
+                
+                // Dev mode bypass
+                if (isDevMode) {
+                    console.log('Dev mode active - bypassing verification');
+                    statusMessage.textContent = "Email verified successfully! (Dev Mode)";
+                    statusMessage.classList.add('success');
+                    return;
+                }
+
+                const result = await checkEmailVerification();
+                
+                if (result.success) {
+                    if (result.isVerified) {
+                        statusMessage.textContent = "Email verified successfully!";
+                        statusMessage.classList.add('success');
+                        // Redirect to dashboard after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 2000);
+                    } else {
+                        statusMessage.textContent = "Please verify your email to continue.";
+                        statusMessage.classList.remove('success');
+                    }
+                } else {
+                    showError(result.message);
+                }
+            } catch (error) {
+                console.error('Verification check error:', error);
+                showError('Error checking verification status');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Resend verification email
+        async function resendVerification() {
+            try {
+                showLoading();
+                
+                // Dev mode bypass
+                if (isDevMode) {
+                    console.log('Dev mode active - bypassing resend');
+                    statusMessage.textContent = "Verification email sent! (Dev Mode)";
+                    statusMessage.classList.remove('success');
+                    return;
+                }
+
+                const pendingEmail = sessionStorage.getItem('pendingVerificationEmail');
+                if (!pendingEmail) {
+                    showError('No email address found. Please try logging in again.');
+                    return;
+                }
+
+                const result = await resendVerificationEmail(pendingEmail);
+                
+                if (result.success) {
+                    statusMessage.textContent = "Verification email sent! Please check your inbox.";
+                    statusMessage.classList.remove('success');
+                } else {
+                    showError(result.message);
+                }
+            } catch (error) {
+                console.error('Resend verification error:', error);
+                showError('Error sending verification email');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Event Listeners
+        resendBtn.addEventListener('click', resendVerification);
+        checkBtn.addEventListener('click', checkVerification);
+        devModeBtn.addEventListener('click', () => {
+            window.location.href = 'dashboard.html';
+        });
+
+        // Check auth state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Dev mode bypass
+                if (isDevMode) {
+                    console.log('Dev mode active - using mock data');
+                    userEmail.textContent = mockUserData.email;
+                    statusMessage.textContent = "Dev Mode Active - Verification Bypassed";
+                    statusMessage.classList.add('success');
+                    devModeBtn.style.display = 'block';
+                    return;
+                }
+
+                userEmail.textContent = user.email;
+                // Check verification status every 5 seconds
+                setInterval(checkVerification, 5000);
+            } else {
+                // Check if we have a pending verification email
+                const pendingEmail = sessionStorage.getItem('pendingVerificationEmail');
+                if (pendingEmail) {
+                    userEmail.textContent = pendingEmail;
+                    statusMessage.textContent = "Please verify your email to continue.";
+                    // Enable the resend button
+                    resendBtn.disabled = false;
+                    // Show help text
+                    document.querySelector('.help-text').style.display = 'block';
+                    return;
+                }
+
+                // If no pending email and not in dev mode, redirect to login
+                if (!isDevMode) {
+                    window.location.href = 'login.html';
+                } else {
+                    console.log('Dev mode active - bypassing auth check');
+                    userEmail.textContent = mockUserData.email;
+                    statusMessage.textContent = "Dev Mode Active - Auth Bypassed";
+                    statusMessage.classList.add('success');
+                    devModeBtn.style.display = 'block';
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

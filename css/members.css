@@ -1,0 +1,465 @@
+/* Members page specific styles */
+:root {
+  --primary-color: #8A2BE2;
+  --secondary-color: #9370DB;
+  --accent-color: #a210af;
+  --text-color: #ffffff;
+  --background-dark: #0a0a0a;
+  --background-light: #111111;
+  --card-bg: rgba(17, 17, 17, 0.8);
+  --glow-color: rgba(138, 43, 226, 0.4);
+  --online-color: #48BB78;
+  --away-color: #ECC94B;
+  --offline-color: #A0AEC0;
+  
+  /* Role colors */
+  --admin-color: #FF0000;
+  --moderator-color: #48BB78;
+  --member-color: #8A2BE2;
+  --founder-color: #FFD700;
+  --co-founder-color: #DAA520;
+  --senior-color: #FF6B6B;
+  --events-color: #4ECDC4;
+  --active-color: #48BB78;
+  --new-color: #A0AEC0;
+  --admin-card-border: #8A2BE2;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--background-dark), var(--background-light));
+  margin: 0;
+  padding: 0;
+}
+
+main {
+  padding-top: 80px;
+  padding-bottom: 2rem;
+}
+
+h1 {
+  color: var(--text-color);
+  font-size: 3.5rem;
+  text-align: center;
+  margin: 2rem 0;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px var(--glow-color);
+  position: relative;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+h1::after {
+  content: '';
+  display: block;
+  width: 150px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  margin: 1rem auto;
+  border-radius: 2px;
+}
+
+.member-section {
+  margin: 4rem 0;
+  padding: 0 2rem;
+}
+
+.member-section h2 {
+  color: var(--text-color);
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.member-section h2::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  margin: 0.8rem auto;
+  border-radius: 2px;
+}
+
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.member-card {
+  background: linear-gradient(145deg, var(--background-light), var(--card-bg));
+  border-radius: 12px;
+  padding: 1.2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.5s ease-in;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(138, 43, 226, 0.1);
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.member-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, transparent, rgba(138, 43, 226, 0.1), transparent);
+  transform: translateX(-100%);
+  transition: 0.5s;
+}
+
+.member-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 25px var(--glow-color);
+  border-color: var(--primary-color);
+}
+
+.member-card:hover::before {
+  transform: translateX(100%);
+}
+
+.status-indicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--background-light);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.status-indicator.online {
+  background-color: var(--online-color);
+  box-shadow: 0 0 10px var(--online-color);
+}
+
+.status-indicator.away {
+  background-color: var(--away-color);
+  box-shadow: 0 0 10px var(--away-color);
+}
+
+.status-indicator.offline {
+  background-color: var(--offline-color);
+  box-shadow: 0 0 10px var(--offline-color);
+}
+
+.member-avatar {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  border: 2px solid var(--primary-color);
+  object-fit: cover;
+  box-shadow: 0 0 20px var(--glow-color);
+  transition: all 0.3s ease;
+}
+
+.member-card:hover .member-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px var(--glow-color);
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.member-card h3 {
+  color: var(--text-color);
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.member-card .role {
+  color: var(--primary-color);
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.role-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.badge {
+  padding: 0.25rem 0.7rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(138, 43, 226, 0.1);
+  border: 1px solid rgba(138, 43, 226, 0.2);
+  color: var(--text-color);
+}
+
+/* Role badge styles */
+.badge.admin {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: rgba(255, 0, 0, 0.2);
+  color: var(--admin-color);
+}
+
+.badge.moderator {
+  background: rgba(72, 187, 120, 0.1);
+  border-color: rgba(72, 187, 120, 0.2);
+  color: var(--moderator-color);
+}
+
+.badge.member {
+  background: rgba(138, 43, 226, 0.1);
+  border-color: rgba(138, 43, 226, 0.2);
+  color: var(--member-color);
+}
+
+.badge.founder {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.2);
+  color: var(--founder-color);
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.badge.co-founder {
+  background: rgba(218, 165, 32, 0.1);
+  border-color: rgba(218, 165, 32, 0.2);
+  color: var(--co-founder-color);
+}
+
+.badge.senior {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.2);
+  color: var(--senior-color);
+}
+
+.badge.events {
+  background: rgba(78, 205, 196, 0.1);
+  border-color: rgba(78, 205, 196, 0.2);
+  color: var(--events-color);
+}
+
+.badge.active {
+  background: rgba(72, 187, 120, 0.1);
+  border-color: rgba(72, 187, 120, 0.2);
+  color: var(--active-color);
+}
+
+.badge.new {
+  background: rgba(160, 174, 192, 0.1);
+  border-color: rgba(160, 174, 192, 0.2);
+  color: var(--new-color);
+}
+
+/* Role-specific card styles */
+.member-card.admin {
+  background: linear-gradient(145deg, #1a1a1a, #222222);
+  border: 2px solid var(--admin-card-border);
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
+}
+
+.member-card.moderator {
+  background: linear-gradient(145deg, #1a1a1a, #222222);
+  border: 2px solid var(--moderator-color);
+}
+
+.member-card.member {
+  background: linear-gradient(145deg, #1a1a1a, #222222);
+  border: 1px solid rgba(138, 43, 226, 0.3);
+}
+
+/* Placeholder styles */
+.member-card.placeholder {
+  background: linear-gradient(145deg, #1a1a1a, #222222);
+  border: 2px dashed rgba(162, 16, 175, 0.3);
+}
+
+.member-card.placeholder .member-avatar {
+  background: rgba(162, 16, 175, 0.1);
+  border: 2px dashed #a210af;
+}
+
+.member-card.placeholder h3,
+.member-card.placeholder p {
+  color: rgba(162, 16, 175, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .member-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .member-section {
+    margin: 3rem 0;
+    padding: 0 1rem;
+  }
+
+  .member-section h2 {
+    font-size: 2rem;
+  }
+
+  .member-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  .member-avatar {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  .member-section h2 {
+    font-size: 1.75rem;
+  }
+
+  .member-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .member-card {
+    padding: 1.25rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px var(--glow-color),
+                 0 0 20px var(--glow-color),
+                 0 0 30px var(--glow-color);
+  }
+  to {
+    text-shadow: 0 0 20px var(--glow-color),
+                 0 0 30px var(--glow-color),
+                 0 0 40px var(--glow-color);
+  }
+}
+
+/* Specific grid layout for administrators section */
+.member-section.admins .member-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.8rem;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 1rem;
+    justify-content: center;
+}
+
+/* Ensure consistent card sizes in admin section */
+.member-section.admins .member-card {
+    width: 100%;
+    max-width: 340px;
+    margin: 0 auto;
+    height: 240px;
+    padding: 1.2rem;
+}
+
+.member-section.admins .member-avatar {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 1rem;
+}
+
+.member-section.admins .member-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 0.3rem;
+}
+
+.member-section.admins .member-card .role {
+    font-size: 1.05rem;
+}
+
+.member-section.admins .badge {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.95rem;
+}
+
+/* Responsive design for admin section */
+@media (max-width: 1200px) {
+    .member-section.admins .member-grid {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 1100px;
+    }
+    
+    .member-section.admins .member-card {
+        max-width: 320px;
+        height: 230px;
+    }
+}
+
+@media (max-width: 992px) {
+    .member-section.admins .member-grid {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 900px;
+    }
+    
+    .member-section.admins .member-card {
+        max-width: 280px;
+        height: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    .member-section.admins .member-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 600px;
+    }
+    
+    .member-section.admins .member-card {
+        max-width: 260px;
+        height: 210px;
+    }
+}
+
+@media (max-width: 480px) {
+    .member-section.admins .member-grid {
+        grid-template-columns: 1fr;
+        max-width: 320px;
+    }
+    
+    .member-section.admins .member-card {
+        max-width: 100%;
+        height: 200px;
+    }
+} 

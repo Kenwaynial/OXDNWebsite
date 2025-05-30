@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OXDN - Admin Dashboard</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/adminDash.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/logo.png" alt="OXDN Logo" class="logo">
+                <h1>OXDN</h1>
+            </div>
+            
+            <div class="admin-profile">
+                <div class="profile-image">
+                    <img src="assets/members/KenwayPfp.jpg" alt="Admin Avatar" id="adminAvatar">
+                    <span class="status-indicator online"></span>
+                </div>
+                <div class="profile-info">
+                    <h2 id="adminName">Kenway</h2>
+                    <p id="adminRole">Founder (Owner)</p>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-section="overview">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="nav-item" data-section="members">
+                    <i class="fas fa-users"></i>
+                    <span>Members</span>
+                </a>
+                <a href="#" class="nav-item" data-section="roles">
+                    <i class="fas fa-user-tag"></i>
+                    <span>Roles</span>
+                </a>
+                <a href="#" class="nav-item" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="index.html" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#" id="logoutBtn" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <h2 id="sectionTitle">Overview</h2>
+                </div>
+                <div class="header-right">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search members, roles...">
+                    </div>
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Overview Section -->
+            <section id="overview-section" class="dashboard-section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Members</h3>
+                            <p class="stat-value">150</p>
+                            <p class="stat-change positive">+12% this week</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Active Now</h3>
+                            <p class="stat-value">45</p>
+                            <p class="stat-change">Last updated: Just now</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Admins Online</h3>
+                            <p class="stat-value">3</p>
+                            <p class="stat-change">Last updated: Just now</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Server Uptime</h3>
+                            <p class="stat-value">99.9%</p>
+                            <p class="stat-change positive">All systems operational</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div class="activity-info">
+                                    <p class="activity-text">New member <strong>@Tessanial</strong> joined the server</p>
+                                    <p class="activity-time">2 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-user-tag"></i>
+                                </div>
+                                <div class="activity-info">
+                                    <p class="activity-text">Role <strong>Moderator</strong> was updated</p>
+                                    <p class="activity-time">15 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-cog"></i>
+                                </div>
+                                <div class="activity-info">
+                                    <p class="activity-text">Server settings were updated</p>
+                                    <p class="activity-time">1 hour ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Quick Actions</h3>
+                        <div class="quick-actions">
+                            <button class="action-btn">
+                                <i class="fas fa-user-plus"></i>
+                                Add Member
+                            </button>
+                            <button class="action-btn">
+                                <i class="fas fa-user-tag"></i>
+                                Manage Roles
+                            </button>
+                            <button class="action-btn">
+                                <i class="fas fa-cog"></i>
+                                Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Members Section -->
+            <section id="members-section" class="dashboard-section">
+                <div class="section-header">
+                    <h3>Member Management</h3>
+                    <button class="primary-btn">
+                        <i class="fas fa-user-plus"></i>
+                        Add Member
+                    </button>
+                </div>
+                <div class="members-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Last Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersTableBody">
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <img src="assets/members/KenwayPfp.jpg" alt="Kenway" class="user-avatar">
+                                        <div class="user-info">
+                                            <span class="username">@Kenway</span>
+                                            <span class="email">josekent804@gmail.com</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="role-badge" style="background-color: var(--founder-color)">Founder</span></td>
+                                <td><span class="status-badge online">Online</span></td>
+                                <td>Just now</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="icon-btn edit" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="icon-btn delete" title="Delete" disabled>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <img src="assets/members/TessaPfp.jpg" alt="Tessanial" class="user-avatar">
+                                        <div class="user-info">
+                                            <span class="username">@Tessanial</span>
+                                            <span class="email">tessanial@example.com</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="role-badge" style="background-color: var(--co-founder-color)">Co-Founder</span></td>
+                                <td><span class="status-badge online">Online</span></td>
+                                <td>5 minutes ago</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="icon-btn edit" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="icon-btn delete" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Roles Section -->
+            <section id="roles-section" class="dashboard-section">
+                <div class="section-header">
+                    <h3>Role Management</h3>
+                    <button class="primary-btn" id="addRoleBtn">
+                        <i class="fas fa-plus"></i>
+                        Add Role
+                    </button>
+                </div>
+                <div class="roles-grid">
+                    <div class="role-card">
+                        <div class="role-header">
+                            <h4>Founder</h4>
+                            <span class="role-color" style="background-color: var(--founder-color)"></span>
+                        </div>
+                        <div class="role-info">
+                            <p>Full access to all features and settings</p>
+                            <div class="role-actions">
+                                <button class="icon-btn edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="icon-btn delete" title="Delete" disabled>
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="role-card">
+                        <div class="role-header">
+                            <h4>Co-Founder</h4>
+                            <span class="role-color" style="background-color: var(--co-founder-color)"></span>
+                        </div>
+                        <div class="role-info">
+                            <p>Full access to all features and settings</p>
+                            <div class="role-actions">
+                                <button class="icon-btn edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="icon-btn delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="dashboard-section">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>Display Settings</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="showOfflineMembers">Show Offline Members</label>
+                                    <p class="setting-description">Display members who are currently offline in the members list</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="showOfflineMembers" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="showEmailAddresses">Show Email Addresses</label>
+                                    <p class="setting-description">Display email addresses in the members list</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="showEmailAddresses">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="showLastActive">Show Last Active</label>
+                                    <p class="setting-description">Display when members were last active</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="showLastActive" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Notification Settings</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="enableNotifications">Enable Notifications</label>
+                                    <p class="setting-description">Receive notifications for important events</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="enableNotifications" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="emailNotifications">Email Notifications</label>
+                                    <p class="setting-description">Receive notifications via email</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="emailNotifications">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="soundNotifications">Sound Notifications</label>
+                                    <p class="setting-description">Play sound for notifications</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="soundNotifications" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Appearance</h3>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="darkMode">Dark Mode</label>
+                                    <p class="setting-description">Enable dark mode for the dashboard</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="darkMode" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label for="compactView">Compact View</label>
+                                    <p class="setting-description">Use a more compact layout</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="compactView">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Role Modal -->
+    <div id="roleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Role</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="roleForm">
+                <div class="form-group">
+                    <label for="roleName">Role Name</label>
+                    <input type="text" id="roleName" required placeholder="Enter role name">
+                </div>
+                <div class="form-group">
+                    <label for="roleColor">Role Color</label>
+                    <input type="color" id="roleColor" value="#8A2BE2">
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="permissions-grid">
+                        <label class="permission-item">
+                            <input type="checkbox" name="permissions" value="manage_members">
+                            <span>Manage Members</span>
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" name="permissions" value="manage_roles">
+                            <span>Manage Roles</span>
+                        </label>
+                        <label class="permission-item">
+                            <input type="checkbox" name="permissions" value="manage_settings">
+                            <span>Manage Settings</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="secondary-btn" id="cancelRole">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './config/firebase.js';
+        import { onAuthStateChanged, logout } from './services/auth.js';
+        import { getCurrentUserData } from './services/user.js';
+        import { isSpecialAccount } from './config/specialAccounts.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        // Development bypass
+        const DEV_BYPASS = true; // Set to false in production
+
+        // Check if user is admin
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userData = await getCurrentUserData();
+                    
+                    // Check if user is admin, founder, or special account
+                    const isAdmin = userData.data.role && ['Founder', 'Admin'].includes(userData.data.role);
+                    const isSpecial = isSpecialAccount(user.email);
+                    
+                    // Allow access if user is admin, founder, special account, or in dev mode
+                    if (!isAdmin && !isSpecial && !DEV_BYPASS) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    // Update admin profile
+                    document.getElementById('adminAvatar').src = user.photoURL || 'assets/kenwayPfp.png';
+                    document.getElementById('adminName').textContent = user.displayName || 'Kenway';
+                    
+                    // Show role with special account indicator if applicable
+                    let roleText = userData.data.role || 'Founder';
+                    if (isSpecial) {
+                        roleText += ' (Special Account)';
+                    }
+                    document.getElementById('adminRole').textContent = roleText;
+
+                    // Load initial data
+                    loadMembers();
+                    updateStats();
+                } catch (error) {
+                    console.error('Error checking admin status:', error);
+                    if (!DEV_BYPASS) {
+                        window.location.href = 'index.html';
+                    }
+                }
+            } else {
+                if (!DEV_BYPASS) {
+                    window.location.href = 'index.html';
+                }
+            }
+        });
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (item.dataset.section) {
+                    e.preventDefault();
+                    // Remove active class from all items and sections
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    document.querySelectorAll('.dashboard-section').forEach(section => section.classList.remove('active'));
+                    
+                    // Add active class to clicked item and corresponding section
+                    item.classList.add('active');
+                    document.getElementById(`${item.dataset.section}-section`).classList.add('active');
+                    
+                    // Update section title
+                    document.getElementById('sectionTitle').textContent = item.querySelector('span').textContent;
+                }
+            });
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await logout();
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        // Load members
+        async function loadMembers() {
+            try {
+                const db = getFirestore();
+                const membersRef = collection(db, 'users');
+                const membersSnapshot = await getDocs(membersRef);
+                const membersTableBody = document.getElementById('membersTableBody');
+                membersTableBody.innerHTML = '';
+
+                membersSnapshot.forEach((doc) => {
+                    const member = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="user-cell">
+                                <img src="${member.photoURL || 'assets/default-avatar.png'}" alt="${member.username}" class="user-avatar">
+                                <div class="user-info">
+                                    <span class="username">${member.username || member.displayName}</span>
+                                    <span class="email">${member.email}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="role-badge" style="background-color: ${getRoleColor(member.role)}">${member.role || 'Member'}</span></td>
+                        <td><span class="status-badge ${member.isActive ? 'online' : 'offline'}">${member.isActive ? 'Online' : 'Offline'}</span></td>
+                        <td>${formatLastActive(member.lastLogin)}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="icon-btn edit" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="icon-btn delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    membersTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading members:', error);
+            }
+        }
+
+        // Update stats
+        async function updateStats() {
+            try {
+                const db = getFirestore();
+                const membersRef = collection(db, 'users');
+                const membersSnapshot = await getDocs(membersRef);
+                
+                const totalMembers = membersSnapshot.size;
+                const activeMembers = membersSnapshot.docs.filter(doc => doc.data().isActive).length;
+                const adminMembers = membersSnapshot.docs.filter(doc => 
+                    ['Founder', 'Admin'].includes(doc.data().role) && doc.data().isActive
+                ).length;
+
+                document.querySelector('.stat-card:nth-child(1) .stat-value').textContent = totalMembers;
+                document.querySelector('.stat-card:nth-child(2) .stat-value').textContent = activeMembers;
+                document.querySelector('.stat-card:nth-child(3) .stat-value').textContent = adminMembers;
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
+        }
+
+        // Helper functions
+        function getRoleColor(role) {
+            const colors = {
+                'Founder': 'var(--founder-color)',
+                'Co-Founder': 'var(--co-founder-color)',
+                'Admin': 'var(--admin-color)',
+                'Moderator': 'var(--moderator-color)',
+                'Member': 'var(--member-color)'
+            };
+            return colors[role] || 'var(--member-color)';
+        }
+
+        function formatLastActive(timestamp) {
+            if (!timestamp) return 'Never';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
+            if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Modal handling
+        const modal = document.getElementById('roleModal');
+        const addRoleBtn = document.getElementById('addRoleBtn');
+        const closeBtn = document.querySelector('.close-btn');
+        const cancelBtn = document.getElementById('cancelRole');
+
+        addRoleBtn.addEventListener('click', () => {
+            modal.classList.add('active');
+        });
+
+        [closeBtn, cancelBtn].forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Settings functionality
+        const settings = {
+            display: {
+                showOfflineMembers: true,
+                showEmailAddresses: false,
+                showLastActive: true
+            },
+            notifications: {
+                enableNotifications: true,
+                emailNotifications: false,
+                soundNotifications: true
+            },
+            appearance: {
+                darkMode: true,
+                compactView: false
+            }
+        };
+
+        // Load saved settings
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('adminSettings');
+            if (savedSettings) {
+                Object.assign(settings, JSON.parse(savedSettings));
+            }
+            updateSettingsUI();
+        }
+
+        // Save settings
+        function saveSettings() {
+            localStorage.setItem('adminSettings', JSON.stringify(settings));
+            updateSettingsUI();
+        }
+
+        // Update UI based on settings
+        function updateSettingsUI() {
+            // Display settings
+            document.getElementById('showOfflineMembers').checked = settings.display.showOfflineMembers;
+            document.getElementById('showEmailAddresses').checked = settings.display.showEmailAddresses;
+            document.getElementById('showLastActive').checked = settings.display.showLastActive;
+
+            // Notification settings
+            document.getElementById('enableNotifications').checked = settings.notifications.enableNotifications;
+            document.getElementById('emailNotifications').checked = settings.notifications.emailNotifications;
+            document.getElementById('soundNotifications').checked = settings.notifications.soundNotifications;
+
+            // Appearance settings
+            document.getElementById('darkMode').checked = settings.appearance.darkMode;
+            document.getElementById('compactView').checked = settings.appearance.compactView;
+
+            // Apply settings
+            applySettings();
+        }
+
+        // Apply settings to the UI
+        function applySettings() {
+            // Apply display settings
+            const membersTable = document.querySelector('.members-table');
+            if (membersTable) {
+                membersTable.classList.toggle('show-offline', settings.display.showOfflineMembers);
+                membersTable.classList.toggle('show-email', settings.display.showEmailAddresses);
+                membersTable.classList.toggle('show-last-active', settings.display.showLastActive);
+            }
+
+            // Apply notification settings
+            if (!settings.notifications.enableNotifications) {
+                document.getElementById('emailNotifications').disabled = true;
+                document.getElementById('soundNotifications').disabled = true;
+            } else {
+                document.getElementById('emailNotifications').disabled = false;
+                document.getElementById('soundNotifications').disabled = false;
+            }
+
+            // Apply appearance settings
+            document.body.classList.toggle('dark-mode', settings.appearance.darkMode);
+            document.body.classList.toggle('compact-view', settings.appearance.compactView);
+        }
+
+        // Add event listeners for settings
+        document.querySelectorAll('.setting-item input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const setting = e.target.id;
+                const value = e.target.checked;
+
+                // Update settings object
+                if (setting.startsWith('show')) {
+                    settings.display[setting] = value;
+                } else if (setting.includes('Notification')) {
+                    settings.notifications[setting] = value;
+                } else {
+                    settings.appearance[setting] = value;
+                }
+
+                saveSettings();
+            });
+        });
+
+        // Load settings when the page loads
+        document.addEventListener('DOMContentLoaded', loadSettings);
+    </script>
+</body>
+</html> 

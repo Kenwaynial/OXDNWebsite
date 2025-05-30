@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OXDN - Dashboard</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/logo.png" alt="OXDN Logo" class="logo">
+            </div>
+            
+            <div class="user-profile">
+                <div id="userAvatar" class="avatar">?</div>
+                <div class="user-info">
+                    <h3 id="userName">User</h3>
+                    <span id="userRole" class="user-role">Member</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button id="homeBtn" class="nav-btn active">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Dashboard
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="logout-btn">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Home Section -->
+            <section id="dashboardHome" class="dashboard-section active">
+                <div class="section-header">
+                    <h1>Welcome Back, <span id="welcomeName">User</span>!</h1>
+                    <p class="last-login">Last login: <span id="lastLogin">-</span></p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h3>Account Information</h3>
+                            <span id="accountStatus" class="status-badge active">Active</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Email</span>
+                                    <span id="userEmail" class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Member Since</span>
+                                    <span id="memberSince" class="info-value">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Account Status</span>
+                                    <div class="status-indicator">
+                                        <div class="status-dot"></div>
+                                        <span class="status-text">Active Account</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <script type="module">
+        import { auth } from './config/firebase.js';
+        import { onAuthStateChanged, logout } from './services/auth.js';
+        import { getCurrentUserData } from './services/user.js';
+        import { isSpecialAccount } from './config/specialAccounts.js';
+
+        // Check if we're in development mode (running on localhost:3000 or 127.0.0.1:3000)
+        const isDevMode = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && 
+                         window.location.port === '3000' && 
+                         window.location.pathname.includes('/PERSONAL/OXDN/');
+
+        // Development bypass
+        const DEV_BYPASS = true; // Set to false in production
+
+        // UI Elements
+        const userName = document.getElementById('userName');
+        const welcomeName = document.getElementById('welcomeName');
+        const userEmail = document.getElementById('userEmail');
+        const userAvatar = document.getElementById('userAvatar');
+        const lastLogin = document.getElementById('lastLogin');
+        const accountStatus = document.getElementById('accountStatus');
+        const memberSince = document.getElementById('memberSince');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+
+        // Helper Functions
+        function showLoading() {
+            loading.classList.add('active');
+        }
+
+        function hideLoading() {
+            loading.classList.remove('active');
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('show');
+            setTimeout(() => {
+                error.classList.remove('show');
+            }, 5000);
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            return name
+                .split(' ')
+                .map(word => word[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Update UI with user data
+        async function updateUserData(user) {
+            try {
+                showLoading();
+                let userData;
+                
+                if (isDevMode) {
+                    // Use mock data in development mode
+                    userData = {
+                        username: 'Dev User',
+                        email: 'dev@example.com',
+                        role: 'Developer',
+                        lastLogin: new Date().toISOString(),
+                        createdAt: new Date().toISOString(),
+                        isActive: true
+                    };
+                } else {
+                    const response = await getCurrentUserData();
+                    if (!response.success) {
+                        throw new Error("Failed to get user data");
+                    }
+                    userData = response.data;
+                }
+
+                // Update UI elements
+                const displayName = userData.username || user?.displayName || user?.email?.split('@')[0] || 'User';
+                userName.textContent = displayName;
+                welcomeName.textContent = displayName;
+                userEmail.textContent = userData.email || user?.email || '-';
+                userAvatar.textContent = getInitials(displayName);
+                lastLogin.textContent = formatDate(userData.lastLogin);
+                memberSince.textContent = formatDate(userData.createdAt);
+                
+                // Update account status
+                const isActive = userData.isActive !== false; // Default to true if not specified
+                const statusText = isActive ? 'Active Account' : 'Inactive Account';
+                const statusClass = isActive ? 'active' : 'inactive';
+                accountStatus.textContent = statusText;
+                accountStatus.className = `status-badge ${statusClass}`;
+                
+                // Update status indicator
+                const statusDot = document.querySelector('.status-dot');
+                const statusTextElement = document.querySelector('.status-text');
+                if (statusDot && statusTextElement) {
+                    statusDot.className = `status-dot ${isActive ? '' : 'inactive'}`;
+                    statusTextElement.textContent = statusText;
+                }
+
+                hideLoading();
+            } catch (error) {
+                console.error('Error updating user data:', error);
+                showError(error.message);
+                hideLoading();
+                
+                if (!isDevMode && error.message.includes("No user is currently signed in")) {
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                }
+            }
+        }
+
+        // Auth State Observer
+        if (isDevMode) {
+            // Skip authentication in development mode
+            updateUserData();
+        } else {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Check if user is josekent804@gmail.com
+                    if (user.email === 'josekent804@gmail.com') {
+                        window.location.href = 'adminDash.html';
+                        return;
+                    }
+                    updateUserData(user);
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Logout Handler
+        logoutBtn.addEventListener('click', async () => {
+            if (isDevMode) {
+                // Just redirect to login in development mode
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                showLoading();
+                await logout();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showError('Error logging out');
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html> 
