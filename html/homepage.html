@@ -146,20 +146,19 @@
   <div class="version">v1.0.0</div>
 
   <script type="module">
-    import { auth } from '../config/firebase.js';
-    import { onAuthStateChanged } from '../services/auth.js';
+    import { supabase } from '../config/supabase.js';
 
-    // Check authentication state
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in
-        console.log("User is signed in");
-        window.location.replace('dashboard.html');
-      } else {
-        // User is signed out
-        console.log("User is signed out");
-      }
-    });
+    // Check if user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      // User is signed in
+      console.log("User is signed in");
+      window.location.replace('dashboard.html');
+    } else {
+      // User is signed out
+      console.log("User is signed out");
+    }
   </script>
 
   <style>
