@@ -86,7 +86,7 @@ export const signInWithGoogle = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/html/auth/callback.html`,
+        redirectTo: `${SITE_URL}/html/auth/callback.html`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
@@ -94,8 +94,19 @@ export const signInWithGoogle = async () => {
       }
     });
 
-    if (error) throw error;
-    return { data, error: null };
+    if (error) {
+      console.error('Google sign-in error:', error);
+      throw error;
+    }
+
+    // If we get here, the OAuth flow has started
+    if (data?.url) {
+      // Redirect to Google's OAuth page
+      window.location.href = data.url;
+      return { data, error: null };
+    } else {
+      throw new Error('Failed to start Google sign-in process');
+    }
   } catch (error) {
     console.error('Google sign-in error:', error);
     return { data: null, error };

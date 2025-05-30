@@ -39,22 +39,40 @@
                     // Handle the OAuth callback
                     const { data, error } = await supabase.auth.getSession();
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Session error:', error);
+                        throw error;
+                    }
                     
-                    if (data.session) {
-                        message.textContent = "Login successful! Redirecting...";
-                        message.classList.add("success");
-                        setTimeout(() => {
-                            window.location.href = "../dashboard.html";
-                        }, 2000);
+                    if (data?.session) {
+                        // Verify the user is actually authenticated
+                        const { data: { user }, error: userError } = await supabase.auth.getUser();
+                        
+                        if (userError) {
+                            console.error('User verification error:', userError);
+                            throw userError;
+                        }
+                        
+                        if (user) {
+                            message.textContent = "Login successful! Redirecting...";
+                            message.classList.add("success");
+                            setTimeout(() => {
+                                window.location.href = "../dashboard.html";
+                            }, 2000);
+                        } else {
+                            throw new Error("User not found after authentication");
+                        }
                     } else {
-                        throw new Error("No session found");
+                        throw new Error("No session found after authentication");
                     }
                 } else {
                     // No hash fragment, check for existing session
                     const { data: { session }, error } = await supabase.auth.getSession();
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Session check error:', error);
+                        throw error;
+                    }
                     
                     if (session) {
                         message.textContent = "Login successful! Redirecting...";
