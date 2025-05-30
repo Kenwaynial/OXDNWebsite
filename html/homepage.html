@@ -5,20 +5,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OXDN - Gaming Community</title>
-  <link rel="icon" type="image/png" href="assets/logo.png">
-  <link rel="apple-touch-icon" href="assets/logo.png">
-  <link rel="stylesheet" href="css/index.css">
+  <link rel="icon" type="image/png" href="../assets/logo.png">
+  <link rel="apple-touch-icon" href="../assets/logo.png">
+  <link rel="stylesheet" href="../css/homepage.css">
   <!-- Add Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body>
   <header>
-    <a href="index.html" class="logo-link">
-      <img src="assets/logo.png" alt="OXDN Logo" class="logo" />
+    <a href="homepage.html" class="logo-link">
+      <img src="../assets/logo.png" alt="OXDN Logo" class="logo" />
     </a>
     <nav>
-      <a href="index.html">Home</a>
+      <a href="homepage.html">Home</a>
       <a href="login.html">Login</a>
       <a href="register.html">Register</a>
       <a href="members.html">Members</a>
@@ -69,32 +69,32 @@
       <h2>Games We Play</h2>
       <div class="events-grid">
         <div class="event-card">
-          <img src="assets/games/lolLogo.png" alt="League of Legends" class="game-logo">
+          <img src="../assets/games/lolLogo.png" alt="League of Legends" class="game-logo">
           <h3>League of Legends</h3>
           <p>ARAM, Normals, or Ranked</p>
         </div>
         <div class="event-card">
-          <img src="assets/games/dota2Logo.png" alt="Dota 2" class="game-logo">
+          <img src="../assets/games/dota2Logo.png" alt="Dota 2" class="game-logo">
           <h3>Dota 2</h3>
           <p>From Herald to Immortal</p>
         </div>
         <div class="event-card">
-          <img src="assets/games/valorantLogo.png" alt="Valorant" class="game-logo">
+          <img src="../assets/games/valorantLogo.png" alt="Valorant" class="game-logo">
           <h3>Valorant</h3>
           <p>Radiant or Not, We Have Fun</p>
         </div>
         <div class="event-card">
-          <img src="assets/games/minecraftLogo.png" alt="Minecraft" class="game-logo">
+          <img src="../assets/games/minecraftLogo.png" alt="Minecraft" class="game-logo">
           <h3>Minecraft</h3>
           <p>Build, Survive, or Just Chill</p>
         </div>
         <div class="event-card">
-          <img src="assets/games/RobloxLogo.png" alt="Roblox" class="game-logo">
+          <img src="../assets/games/RobloxLogo.png" alt="Roblox" class="game-logo">
           <h3>Roblox</h3>
           <p>Endless Gaming Adventures</p>
         </div>
         <div class="event-card">
-          <img src="assets/games/subnauticaLogo.png" alt="Subnautica" class="game-logo">
+          <img src="../assets/games/subnauticaLogo.png" alt="Subnautica" class="game-logo">
           <h3>Subnautica</h3>
           <p>Explore the Depths</p>
         </div>
@@ -146,8 +146,8 @@
   <div class="version">v1.0.47</div>
 
   <script type="module">
-    import { auth } from './config/firebase.js';
-    import { onAuthStateChanged } from './services/auth.js';
+    import { auth } from '../config/firebase.js';
+    import { onAuthStateChanged } from '../services/auth.js';
 
     // Check authentication state
     onAuthStateChanged(auth, (user) => {

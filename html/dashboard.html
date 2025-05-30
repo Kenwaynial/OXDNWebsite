@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OXDN - Dashboard</title>
-    <link rel="icon" type="image/png" href="assets/logo.png">
-    <link rel="apple-touch-icon" href="assets/logo.png">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon" type="image/png" href="../assets/logo.png">
+    <link rel="apple-touch-icon" href="../assets/logo.png">
+    <link rel="stylesheet" href="../css/dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -14,7 +14,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <img src="assets/logo.png" alt="OXDN Logo" class="logo">
+                <img src="../assets/logo.png" alt="OXDN Logo" class="logo">
             </div>
             
             <div class="user-profile">
@@ -94,10 +94,10 @@
     <div id="error" class="error"></div>
 
     <script type="module">
-        import { auth } from './config/firebase.js';
-        import { onAuthStateChanged, logout } from './services/auth.js';
-        import { getCurrentUserData } from './services/user.js';
-        import { isSpecialAccount } from './config/specialAccounts.js';
+        import { auth } from '../config/firebase.js';
+        import { onAuthStateChanged, logout } from '../services/auth.js';
+        import { getCurrentUserData } from '../services/user.js';
+        import { isSpecialAccount } from '../config/specialAccounts.js';
 
         // Check if we're in development mode (running on localhost:3000 or 127.0.0.1:3000)
         const isDevMode = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && 
