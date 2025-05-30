@@ -47,8 +47,7 @@ export const registerWithEmail = async (email, password, username) => {
       password,
       options: {
         data: {
-          username: username,
-          display_name: username // Set display name same as username initially
+          username: username
         },
         emailRedirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
       }
@@ -58,36 +57,25 @@ export const registerWithEmail = async (email, password, username) => {
       if (error.message.includes('For security purposes')) {
         throw new Error('Please wait a moment before trying again.')
       }
-      if (error.message.includes('already registered')) {
-        throw new Error('This email is already registered. Please try logging in or use a different email.')
-      }
       throw error
     }
 
-    // Create profile using the new handle_registration function
+    // Create profile using the stored procedure
     if (data.user) {
-      const { error: profileError } = await supabase.rpc('handle_registration', {
+      const { error: profileError } = await supabase.rpc('create_profile_for_user', {
         user_id: data.user.id,
-        user_email: email,
-        user_metadata: { 
-          username: username,
-          display_name: username
-        }
+        username: username
       })
 
       if (profileError) {
         console.error('Profile creation error:', profileError)
-        if (profileError.code === '23505') {
-          throw new Error('This email is already registered. Please try logging in or use a different email.')
-        }
-        throw new Error('Username is already taken. Please try a different username.')
+        throw new Error('Failed to create user profile. Please try again.')
       }
     }
 
     return {
       success: true,
-      message: 'Registration successful! Please check your email to verify your account.',
-      data
+      message: 'Registration successful! Please check your email to verify your account.'
     }
   } catch (error) {
     console.error('Registration error:', error)
