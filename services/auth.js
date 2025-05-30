@@ -93,6 +93,8 @@ export const signInWithGoogle = async () => {
 
 export const registerWithEmail = async (email, password, username) => {
   try {
+    console.log('Starting registration process for:', { email, username });
+
     // First check if email already exists
     const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
@@ -108,6 +110,7 @@ export const registerWithEmail = async (email, password, username) => {
     }
 
     if (existingUsers && existingUsers.length > 0) {
+      console.log('Email already exists:', email);
       return {
         success: false,
         message: 'This email is already registered. Please use a different email or try logging in.'
@@ -129,11 +132,14 @@ export const registerWithEmail = async (email, password, username) => {
     }
 
     if (existingUsernames && existingUsernames.length > 0) {
+      console.log('Username already taken:', username);
       return {
         success: false,
         message: 'This username is already taken. Please choose a different username.'
       }
     }
+
+    console.log('Email and username available, proceeding with signup');
 
     // Store email in sessionStorage for verification page
     sessionStorage.setItem('pendingVerificationEmail', email)
@@ -152,6 +158,7 @@ export const registerWithEmail = async (email, password, username) => {
     })
 
     if (error) {
+      console.error('Signup error:', error);
       if (error.message.includes('For security purposes')) {
         return {
           success: false,
@@ -164,8 +171,17 @@ export const registerWithEmail = async (email, password, username) => {
           message: 'This email is already registered. Please use a different email or try logging in.'
         }
       }
+      if (error.message.includes('Database error')) {
+        console.error('Database error details:', error);
+        return {
+          success: false,
+          message: 'Error creating account. Please try again or contact support.'
+        }
+      }
       throw error
     }
+
+    console.log('User created successfully, creating profile');
 
     // Create profile using the stored procedure
     if (data.user) {
@@ -181,12 +197,18 @@ export const registerWithEmail = async (email, password, username) => {
       if (profileError) {
         console.error('Profile creation error:', profileError)
         // If profile creation fails, delete the auth user
-        await supabase.auth.admin.deleteUser(data.user.id)
+        try {
+          await supabase.auth.admin.deleteUser(data.user.id)
+        } catch (deleteError) {
+          console.error('Error deleting auth user after profile creation failure:', deleteError)
+        }
         return {
           success: false,
           message: 'Failed to create user profile. Please try again.'
         }
       }
+
+      console.log('Profile created successfully');
     }
 
     return {
