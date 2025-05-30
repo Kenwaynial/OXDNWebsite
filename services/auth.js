@@ -41,6 +41,15 @@ export const registerWithEmail = async (email, password, username) => {
     // Store email in sessionStorage for verification page
     sessionStorage.setItem('pendingVerificationEmail', email);
 
+    // Determine if we're in development mode
+    const isDevMode = typeof window !== 'undefined' && 
+                     (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    // Use production URL for email redirects
+    const redirectTo = isDevMode 
+      ? 'https://oxdn.vercel.app/html/verifyEmail.html'
+      : window.location.origin + '/html/verifyEmail.html';
+
     // Sign up the user
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -49,7 +58,7 @@ export const registerWithEmail = async (email, password, username) => {
         data: {
           username: username
         },
-        emailRedirectTo: window.location.origin + '/html/verifyEmail.html'
+        emailRedirectTo: redirectTo
       }
     })
 
