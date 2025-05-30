@@ -38,14 +38,6 @@ export const getCurrentUser = async () => {
 
 export const registerWithEmail = async (email, password, username) => {
   try {
-    // Check if email exists and is unverified
-    const { data: existingUser, error: checkError } = await supabase.auth.admin.getUserByEmail(email)
-    
-    if (existingUser && !existingUser.email_confirmed_at) {
-      // If user exists but is unverified, delete the old account
-      await supabase.auth.admin.deleteUser(existingUser.id)
-    }
-
     // Store email in sessionStorage for verification page
     sessionStorage.setItem('pendingVerificationEmail', email);
 
@@ -65,6 +57,9 @@ export const registerWithEmail = async (email, password, username) => {
       if (error.message.includes('For security purposes')) {
         throw new Error('Please wait a moment before trying again.')
       }
+      if (error.message.includes('already registered')) {
+        throw new Error('This email is already registered. Please try logging in or use a different email.')
+      }
       throw error
     }
 
@@ -78,8 +73,6 @@ export const registerWithEmail = async (email, password, username) => {
 
       if (profileError) {
         console.error('Profile creation error:', profileError)
-        // If profile creation fails, we should delete the user
-        await supabase.auth.admin.deleteUser(data.user.id)
         throw new Error('Username is already taken. Please try a different username.')
       }
     }
