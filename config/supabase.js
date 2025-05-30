@@ -29,7 +29,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       RESET_PASSWORD_URL,
       VERIFY_EMAIL_URL,
       AUTH_CALLBACK_URL,
-      // Add localhost for testing
+      // localhost for testing
       'http://localhost:3000/html/auth/resetPassword.html'
     ]
   }
