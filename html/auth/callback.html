@@ -3,46 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OXDN - Authentication Callback</title>
+    <title>OXDN - Authentication</title>
     <link rel="icon" type="image/png" href="../../assets/logo.png">
     <link rel="apple-touch-icon" href="../../assets/logo.png">
-    <link rel="stylesheet" href="../../css/auth.css">
-    <link rel="stylesheet" href="../../css/callback.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            --primary-purple: #8A2BE2;
-            --primary-purple-light: #9370DB;
-            --primary-purple-dark: #6A1B9A;
-            --gradient-purple: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-light) 100%);
-        }
-
         .auth-container {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            background: linear-gradient(135deg, var(--background-dark), var(--primary-color));
+            position: relative;
+            overflow: hidden;
         }
 
-        .logo-link {
-            margin-bottom: 2rem;
-            transition: transform 0.3s ease;
-        }
-
-        .logo-link:hover {
-            transform: scale(1.05);
-        }
-
-        .logo {
-            height: 50px;
-            width: auto;
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            z-index: 1;
         }
 
         .auth-form {
-            background: white;
+            background: var(--card-bg);
             padding: 2.5rem;
             border-radius: 15px;
             box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15);
@@ -50,26 +40,33 @@
             width: 100%;
             max-width: 400px;
             border: 1px solid rgba(138, 43, 226, 0.1);
+            position: relative;
+            z-index: 2;
+            backdrop-filter: blur(10px);
         }
 
         .auth-form h1 {
-            color: var(--primary-purple);
-            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-size: 2rem;
             margin-bottom: 1rem;
             font-weight: 600;
+            background: linear-gradient(45deg, #8A2BE2, #9370DB);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .form-description {
-            color: #666;
+            color: var(--text-color);
             margin-bottom: 2rem;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
 
         .loading-spinner {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border: 4px solid rgba(138, 43, 226, 0.1);
-            border-top: 4px solid var(--primary-purple);
+            border-top: 4px solid var(--primary-color);
             border-radius: 50%;
             margin: 0 auto 2rem;
             animation: spin 1s linear infinite;
@@ -88,11 +85,13 @@
             text-align: center;
             width: 100%;
             max-width: 400px;
+            position: relative;
+            z-index: 2;
         }
 
         #message.success {
             background-color: rgba(138, 43, 226, 0.1);
-            color: var(--primary-purple);
+            color: var(--primary-color);
             border: 1px solid rgba(138, 43, 226, 0.2);
         }
 
@@ -102,118 +101,112 @@
             border: 1px solid rgba(220, 53, 69, 0.2);
         }
 
-        .dev-mode-notice {
-            background: var(--gradient-purple);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 1rem;
-            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+        .logo-link {
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo-link:hover {
+            transform: scale(1.05);
+        }
+
+        .logo {
+            height: 60px;
+            width: auto;
+            filter: drop-shadow(0 0 10px rgba(138, 43, 226, 0.5));
+        }
+
+        .version {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.8rem;
+            z-index: 2;
         }
     </style>
 </head>
 <body>
     <main class="auth-container">
-        <a href="../login.html" class="logo-link">
+        <a href="../homepage.html" class="logo-link">
             <img src="../../assets/logo.png" alt="OXDN Logo" class="logo">
         </a>
 
         <div class="auth-form">
-            <h1>Processing Login</h1>
-            <p class="form-description">Please wait while we complete your authentication...</p>
+            <h1>Authentication in Progress</h1>
+            <p class="form-description">Securing your gaming journey...</p>
             <div class="loading-spinner"></div>
         </div>
 
-        <p id="message"></p>
+        <div id="message"></div>
     </main>
+
+    <div class="version">v1.0.1</div>
 
     <script type="module">
         import { supabase } from '../../config/supabase.js';
 
         const message = document.getElementById("message");
+        const authForm = document.querySelector('.auth-form');
+        const loadingSpinner = document.querySelector('.loading-spinner');
 
-        // Check for dev mode - more lenient check
-        const isDevMode = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' ||
-                         window.location.hostname.includes('vercel.app') ||
-                         window.location.pathname.includes('/OXDNWebsite/');
-
-        if (isDevMode) {
-            message.innerHTML = `<div class="dev-mode-notice">Dev Mode Active - Authentication Bypassed</div>`;
-            message.classList.add("success");
-            setTimeout(() => {
-                window.location.href = "../dashboard.html";
-            }, 2000);
-            return;
+        function showMessage(text, type) {
+            message.innerHTML = `<div class="message ${type}">${text}</div>`;
+            message.classList.add(type);
+            if (type === 'success') {
+                loadingSpinner.style.display = 'none';
+            }
         }
 
         // Handle the OAuth callback
         const handleCallback = async () => {
             try {
-                // Get the hash fragment from the URL
-                const hash = window.location.hash;
-                const providerToken = sessionStorage.getItem('provider_token');
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
-                if (hash) {
-                    // Handle the OAuth callback
-                    const { data, error } = await supabase.auth.getSession();
+                if (sessionError) {
+                    throw sessionError;
+                }
+
+                if (session) {
+                    // Check if we have a provider token in session storage
+                    const providerToken = sessionStorage.getItem('provider_token');
                     
-                    if (error) {
-                        console.error('Session error:', error);
-                        throw error;
-                    }
-                    
-                    if (data?.session) {
-                        // Verify the user is actually authenticated
-                        const { data: { user }, error: userError } = await supabase.auth.getUser();
+                    if (providerToken) {
+                        const { error: updateError } = await supabase.auth.updateUser({
+                            data: { provider_token: providerToken }
+                        });
                         
-                        if (userError) {
-                            console.error('User verification error:', userError);
-                            throw userError;
+                        if (updateError) {
+                            console.error('Provider token update error:', updateError);
                         }
                         
-                        if (user) {
-                            // Store the provider token in the user's session
-                            if (providerToken) {
-                                await supabase.auth.updateUser({
-                                    data: { provider_token: providerToken }
-                                });
-                                sessionStorage.removeItem('provider_token');
-                            }
+                        sessionStorage.removeItem('provider_token');
+                    }
 
-                            message.textContent = "Login successful! Redirecting...";
-                            message.classList.add("success");
+                    showMessage("Authentication successful! Redirecting to dashboard...", "success");
+                    setTimeout(() => {
+                        window.location.href = "../dashboard.html";
+                    }, 2000);
+                } else {
+                    // Check if we have a hash in the URL (OAuth callback)
+                    const hash = window.location.hash;
+                    if (hash) {
+                        const { data, error } = await supabase.auth.getSession();
+                        if (error) throw error;
+                        
+                        if (data?.session) {
+                            showMessage("Authentication successful! Redirecting to dashboard...", "success");
                             setTimeout(() => {
                                 window.location.href = "../dashboard.html";
                             }, 2000);
                         } else {
-                            throw new Error("User not found after authentication");
+                            throw new Error("Session not found after OAuth callback");
                         }
                     } else {
-                        throw new Error("No session found after authentication");
-                    }
-                } else {
-                    // No hash fragment, check for existing session
-                    const { data: { session }, error } = await supabase.auth.getSession();
-                    
-                    if (error) {
-                        console.error('Session check error:', error);
-                        throw error;
-                    }
-                    
-                    if (session) {
-                        message.textContent = "Login successful! Redirecting...";
-                        message.classList.add("success");
-                        setTimeout(() => {
-                            window.location.href = "../dashboard.html";
-                        }, 2000);
-                    } else {
-                        message.textContent = "Authentication failed. Please try again.";
-                        message.classList.add("error");
+                        showMessage("Authentication failed. Redirecting to login...", "error");
                         setTimeout(() => {
                             window.location.href = "../login.html";
                         }, 2000);
@@ -221,8 +214,7 @@
                 }
             } catch (error) {
                 console.error('Auth callback error:', error);
-                message.textContent = error.message || "An error occurred during authentication. Please try again.";
-                message.classList.add("error");
+                showMessage("Authentication failed. Please try again.", "error");
                 setTimeout(() => {
                     window.location.href = "../login.html";
                 }, 2000);

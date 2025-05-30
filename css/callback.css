@@ -3,6 +3,8 @@
     --primary-purple-light: #9370DB;
     --primary-purple-dark: #6A1B9A;
     --gradient-purple: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-light) 100%);
+    --success-color: #10B981;
+    --error-color: #EF4444;
 }
 
 .auth-container {
@@ -12,55 +14,66 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f2ff 100%);
 }
 
 .logo-link {
-    margin-bottom: 2rem;
-    transition: transform 0.3s ease;
+    margin-bottom: 2.5rem;
+    transition: all 0.3s ease;
+    display: inline-block;
 }
 
 .logo-link:hover {
-    transform: scale(1.05);
+    transform: scale(1.05) translateY(-2px);
+    filter: drop-shadow(0 4px 8px rgba(138, 43, 226, 0.2));
 }
 
 .logo {
-    height: 50px;
+    height: 60px;
     width: auto;
 }
 
 .auth-form {
     background: white;
-    padding: 2.5rem;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15);
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(138, 43, 226, 0.1);
     text-align: center;
     width: 100%;
-    max-width: 400px;
-    border: 1px solid rgba(138, 43, 226, 0.1);
+    max-width: 420px;
+    border: 1px solid rgba(138, 43, 226, 0.08);
+    transition: all 0.3s ease;
+}
+
+.auth-form:hover {
+    box-shadow: 0 15px 35px rgba(138, 43, 226, 0.15);
+    transform: translateY(-2px);
 }
 
 .auth-form h1 {
     color: var(--primary-purple);
-    font-size: 1.8rem;
+    font-size: 2rem;
     margin-bottom: 1rem;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 .form-description {
-    color: #666;
-    margin-bottom: 2rem;
-    font-size: 1rem;
+    color: #64748B;
+    margin-bottom: 2.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
 }
 
 .loading-spinner {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border: 4px solid rgba(138, 43, 226, 0.1);
     border-top: 4px solid var(--primary-purple);
     border-radius: 50%;
     margin: 0 auto 2rem;
     animation: spin 1s linear infinite;
+    box-shadow: 0 4px 12px rgba(138, 43, 226, 0.1);
 }
 
 @keyframes spin {
@@ -69,36 +82,54 @@
 }
 
 #message {
-    margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 8px;
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+.message {
+    padding: 1.25rem;
+    border-radius: 12px;
     font-weight: 500;
     text-align: center;
-    width: 100%;
-    max-width: 400px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    animation: slideIn 0.3s ease;
 }
 
-#message.success {
-    background-color: rgba(138, 43, 226, 0.1);
-    color: var(--primary-purple);
-    border: 1px solid rgba(138, 43, 226, 0.2);
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-#message.error {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-    border: 1px solid rgba(220, 53, 69, 0.2);
+.message.success {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.message.error {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .dev-mode-notice {
     background: var(--gradient-purple);
     color: white;
-    padding: 1rem;
-    border-radius: 8px;
+    padding: 1.25rem;
+    border-radius: 12px;
     font-weight: 500;
     text-align: center;
     width: 100%;
-    max-width: 400px;
-    margin-top: 1rem;
-    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+    max-width: 420px;
+    margin-top: 1.5rem;
+    box-shadow: 0 8px 20px rgba(138, 43, 226, 0.2);
+    animation: slideIn 0.3s ease;
 } 
