@@ -1,19 +1,78 @@
 import { supabase } from '../config/supabase.js'
 
+// Simple sign up function
 export const signUp = async (email, password) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
-  return { data, error }
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
+      }
+    })
+    
+    if (error) throw error
+    
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
 }
 
+// Simple sign in function
 export const signIn = async (email, password) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-  return { data, error }
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+    
+    if (error) throw error
+    
+    return { data, error: null }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+// Simple sign out function
+export const signOut = async () => {
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
+    return { error: null }
+  } catch (error) {
+    return { error }
+  }
+}
+
+// Get current user
+export const getCurrentUser = async () => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error) throw error
+    return { user, error: null }
+  } catch (error) {
+    return { user: null, error }
+  }
+}
+
+// Resend verification email
+export const resendVerification = async (email) => {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
+      }
+    })
+    
+    if (error) throw error
+    return { error: null }
+  } catch (error) {
+    return { error }
+  }
 }
 
 export const signInWithGoogle = async () => {
@@ -24,16 +83,6 @@ export const signInWithGoogle = async () => {
     }
   })
   return { data, error }
-}
-
-export const signOut = async () => {
-  const { error } = await supabase.auth.signOut()
-  return { error }
-}
-
-export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
 }
 
 export const registerWithEmail = async (email, password, username) => {
@@ -88,28 +137,6 @@ export const registerWithEmail = async (email, password, username) => {
     return {
       success: false,
       message: error.message || 'An error occurred during registration. Please try again.'
-    }
-  }
-}
-
-export const resendVerificationEmail = async (email) => {
-  try {
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: email
-    })
-
-    if (error) throw error
-
-    return {
-      success: true,
-      message: 'Verification email sent! Please check your inbox.'
-    }
-  } catch (error) {
-    console.error('Resend verification error:', error)
-    return {
-      success: false,
-      message: error.message || 'Failed to resend verification email. Please try again.'
     }
   }
 } 

@@ -58,7 +58,7 @@
 
     <script type="module">
         import { supabase } from '../config/supabase.js';
-        import { resendVerificationEmail } from '../services/auth.js'
+        import { resendVerification } from '../services/auth.js';
 
         const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
@@ -100,9 +100,8 @@
                 if (session?.user?.email_confirmed_at) {
                     statusMessage.textContent = "Email verified successfully!";
                     statusMessage.classList.add('success');
-                    // Redirect to dashboard after 2 seconds
                     setTimeout(() => {
-                        window.location.href = 'dashboard.html';
+                        window.location.href = "dashboard.html";
                     }, 2000);
                 } else {
                     statusMessage.textContent = "Please verify your email to continue.";
@@ -127,14 +126,7 @@
                     return;
                 }
 
-                const { error } = await supabase.auth.resend({
-                    type: 'signup',
-                    email: pendingEmail,
-                    options: {
-                        emailRedirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
-                    }
-                });
-
+                const { error } = await resendVerification(pendingEmail);
                 if (error) throw error;
 
                 statusMessage.textContent = "Verification email sent! Please check your inbox.";
@@ -159,24 +151,18 @@
             try {
                 showLoading();
                 
-                // Check if we have a pending verification email
                 const pendingEmail = sessionStorage.getItem('pendingVerificationEmail');
-                
-                // Get current session
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
                 if (sessionError) throw sessionError;
 
                 if (session?.user) {
                     userEmail.textContent = session.user.email;
-                    // Check verification status every 5 seconds
                     setInterval(checkVerification, 5000);
                 } else if (pendingEmail) {
                     userEmail.textContent = pendingEmail;
                     statusMessage.textContent = "Please verify your email to continue.";
-                    // Enable the resend button
                     resendBtn.disabled = false;
-                    // Show help text
                     document.querySelector('.help-text').style.display = 'block';
                 } else {
                     window.location.href = 'login.html';

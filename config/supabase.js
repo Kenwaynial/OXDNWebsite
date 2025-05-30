@@ -19,9 +19,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    redirectTo: `${PRODUCTION_URL}/html/verifyEmail.html`
+    detectSessionInUrl: true
   }
 })
 

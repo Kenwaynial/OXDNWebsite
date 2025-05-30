@@ -122,19 +122,14 @@
         message.textContent = "Login successful!";
         message.classList.add("success");
         loginForm.reset();
+
+        // Redirect to dashboard
         setTimeout(() => {
           window.location.href = "dashboard.html";
         }, 2000);
       } catch (error) {
-        // Check if the error is about unverified email
-        if (error.message.includes('verify your email')) {
-          // Store the email in sessionStorage before redirecting
-          sessionStorage.setItem('pendingVerificationEmail', email);
-          message.innerHTML = `${error.message}<br>
-            <a href="verifyEmail.html" class="verify-link show">Click here to verify your email</a>`;
-        } else {
-          message.textContent = error.message;
-        }
+        console.error('Login error:', error);
+        message.textContent = error.message || "An error occurred during login. Please try again.";
         message.classList.add("error");
       }
     });
