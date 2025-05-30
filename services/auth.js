@@ -45,7 +45,8 @@ export const registerWithEmail = async (email, password, username) => {
       options: {
         data: {
           username: username
-        }
+        },
+        emailRedirectTo: `${window.location.origin}/html/verifyEmail.html`
       }
     })
 
