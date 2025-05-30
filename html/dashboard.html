@@ -174,7 +174,12 @@
                 if (statsError) throw statsError;
 
                 // Update online status
-                await updateOnlineStatus(user.id, 'online');
+                if (user.id) {
+                    const { error: statusError } = await updateOnlineStatus(user.id, 'online');
+                    if (statusError) {
+                        console.error('Error updating online status:', statusError);
+                    }
+                }
 
                 // Update UI elements
                 const displayName = profile.username || user.email?.split('@')[0] || 'User';
@@ -220,7 +225,7 @@
             updateUserData();
         } else {
             // Check authentication and update data
-            const user = await getCurrentUser();
+            const { user, error } = await getCurrentUser();
             if (user) {
                 updateUserData();
             } else {
@@ -230,7 +235,7 @@
 
         // Set up real-time subscriptions
         if (!isDevMode) {
-            const user = await getCurrentUser();
+            const { user, error } = await getCurrentUser();
             if (user) {
                 // Subscribe to online status changes
                 subscribeToOnlineStatus((payload) => {
@@ -253,8 +258,8 @@
                 if (error) throw error;
                 
                 // Update online status to offline
-                const user = await getCurrentUser();
-                if (user) {
+                const { user } = await getCurrentUser();
+                if (user?.id) {
                     await updateOnlineStatus(user.id, 'offline');
                 }
                 
@@ -268,14 +273,11 @@
 
         // Handle page visibility changes
         document.addEventListener('visibilitychange', async () => {
-            if (document.visibilityState === 'hidden') {
-                const user = await getCurrentUser();
-                if (user) {
+            const { user } = await getCurrentUser();
+            if (user?.id) {
+                if (document.visibilityState === 'hidden') {
                     await updateOnlineStatus(user.id, 'away');
-                }
-            } else if (document.visibilityState === 'visible') {
-                const user = await getCurrentUser();
-                if (user) {
+                } else if (document.visibilityState === 'visible') {
                     await updateOnlineStatus(user.id, 'online');
                 }
             }
