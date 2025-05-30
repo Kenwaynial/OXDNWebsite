@@ -61,11 +61,19 @@ export const registerWithEmail = async (email, password, username) => {
             username: username,
             email: email,
             role: 'member',
-            created_at: new Date().toISOString()
+            avatar_url: null,
+            discord_id: null,
+            steam_id: null,
+            favorite_games: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }
         ])
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+        throw profileError
+      }
     }
 
     return {
