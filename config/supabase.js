@@ -1,9 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm'
 
-const supabaseUrl = 'YOUR_SUPABASE_URL'
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'
-
-export const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = 'https://ncehdvoeausqrzjohgll.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jZWhkdm9lYXVzcXJ6am9oZ2xsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1NDYwODIsImV4cCI6MjA2NDEyMjA4Mn0.DkV7MvbzShMu8kps7bzad25wVjMH-N6l-MHagaKfvF0'
 
 // Site URL configuration
 const SITE_URL = 'https://oxdn.vercel.app';
@@ -186,4 +184,4 @@ export const subscribeToUserStats = (userId, callback) => {
       callback
     )
     .subscribe()
-}
+} 
