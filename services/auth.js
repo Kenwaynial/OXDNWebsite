@@ -93,8 +93,36 @@ export const signInWithGoogle = async () => {
 
 export const registerWithEmail = async (email, password, username) => {
   try {
+    // First check if email already exists
+    const { data: existingUser, error: checkError } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('email', email)
+      .single()
+
+    if (existingUser) {
+      return {
+        success: false,
+        message: 'This email is already registered. Please use a different email or try logging in.'
+      }
+    }
+
+    // Check if username is already taken
+    const { data: existingUsername, error: usernameError } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single()
+
+    if (existingUsername) {
+      return {
+        success: false,
+        message: 'This username is already taken. Please choose a different username.'
+      }
+    }
+
     // Store email in sessionStorage for verification page
-    sessionStorage.setItem('pendingVerificationEmail', email);
+    sessionStorage.setItem('pendingVerificationEmail', email)
 
     // Sign up the user
     const { data, error } = await supabase.auth.signUp({
@@ -111,7 +139,16 @@ export const registerWithEmail = async (email, password, username) => {
 
     if (error) {
       if (error.message.includes('For security purposes')) {
-        throw new Error('Please wait a moment before trying again.')
+        return {
+          success: false,
+          message: 'Please wait a moment before trying again.'
+        }
+      }
+      if (error.message.includes('already registered')) {
+        return {
+          success: false,
+          message: 'This email is already registered. Please use a different email or try logging in.'
+        }
       }
       throw error
     }
@@ -129,7 +166,12 @@ export const registerWithEmail = async (email, password, username) => {
 
       if (profileError) {
         console.error('Profile creation error:', profileError)
-        throw new Error('Failed to create user profile. Please try again.')
+        // If profile creation fails, delete the auth user
+        await supabase.auth.admin.deleteUser(data.user.id)
+        return {
+          success: false,
+          message: 'Failed to create user profile. Please try again.'
+        }
       }
     }
 

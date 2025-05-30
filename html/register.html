@@ -74,17 +74,29 @@
     const registerForm = document.getElementById("registerForm");
     const message = document.getElementById("message");
     const submitBtn = document.getElementById("submitBtn");
+    const usernameInput = document.getElementById("username");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const usernameError = document.getElementById("usernameError");
+    const emailError = document.getElementById("emailError");
+    const passwordError = document.getElementById("passwordError");
 
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       message.textContent = "";
       message.classList.remove("error", "success");
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
+      const username = usernameInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
 
-      if (!email || !password) {
-        message.textContent = "Please fill in all fields.";
+      // Validate all fields
+      const isUsernameValid = validateUsername(username);
+      const isEmailValid = validateEmail(email);
+      const isPasswordValid = validatePassword(password);
+
+      if (!isUsernameValid || !isEmailValid || !isPasswordValid) {
+        message.textContent = "Please fix the errors in the form.";
         message.classList.add("error");
         return;
       }
@@ -93,27 +105,102 @@
         submitBtn.disabled = true;
         message.textContent = "Creating your account...";
         
-        const { data, error } = await signUp(email, password);
+        const result = await registerWithEmail(email, password, username);
         
-        if (error) throw error;
+        if (result.success) {
+          // Store the email in sessionStorage for the verification page
+          sessionStorage.setItem('pendingVerificationEmail', email);
+          
+          // Show success message with loading spinner
+          message.innerHTML = `${result.message}<br>
+            <div class="loading-spinner"></div>`;
+          message.classList.add("success");
+          registerForm.reset();
+          submitBtn.style.display = 'none';
 
-        message.textContent = "Registration successful! Please check your email to verify your account.";
-        message.classList.add("success");
-        registerForm.reset();
-
-        // Store email for verification page
-        sessionStorage.setItem('pendingVerificationEmail', email);
-
-        // Redirect to verification page
-        setTimeout(() => {
-          window.location.href = "verifyEmail.html";
-        }, 2000);
+          // Try to redirect after 2 seconds
+          setTimeout(() => {
+            try {
+              window.location.href = "verifyEmail.html";
+            } catch (error) {
+              // If redirect fails, show the verify link button
+              message.innerHTML = `${result.message}<br>
+                <a href="verifyEmail.html" class="verify-link show">Click here to verify your email</a>`;
+            }
+          }, 2000);
+        } else {
+          // Handle specific error cases
+          if (result.message.includes('already registered')) {
+            emailInput.parentElement.classList.add('error');
+            emailError.textContent = 'This email is already registered';
+          } else if (result.message.includes('username is already taken')) {
+            usernameInput.parentElement.classList.add('error');
+            usernameError.textContent = 'This username is already taken';
+          }
+          
+          message.textContent = result.message;
+          message.classList.add("error");
+          submitBtn.disabled = false;
+        }
       } catch (error) {
         console.error('Registration error:', error);
-        message.textContent = error.message || "An error occurred during registration. Please try again.";
+        message.textContent = "An error occurred during registration. Please try again.";
         message.classList.add("error");
-      } finally {
         submitBtn.disabled = false;
+      }
+    });
+
+    // Add real-time validation for username
+    usernameInput.addEventListener('input', async () => {
+      const username = usernameInput.value.trim();
+      const isValid = validateUsername(username);
+      
+      usernameInput.parentElement.classList.toggle('error', !isValid);
+      usernameError.textContent = isValid ? '' : 'Username must be at least 3 characters and contain only letters, numbers, and underscores';
+      
+      // Check if username is taken
+      if (isValid && username.length >= 3) {
+        try {
+          const { data: existingUsername } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('username', username)
+            .single();
+            
+          if (existingUsername) {
+            usernameInput.parentElement.classList.add('error');
+            usernameError.textContent = 'This username is already taken';
+          }
+        } catch (error) {
+          // Ignore errors from the check
+        }
+      }
+    });
+
+    // Add real-time validation for email
+    emailInput.addEventListener('input', async () => {
+      const email = emailInput.value.trim();
+      const isValid = validateEmail(email);
+      
+      emailInput.parentElement.classList.toggle('error', !isValid);
+      emailError.textContent = isValid ? '' : 'Please enter a valid Gmail address (example@gmail.com)';
+      
+      // Check if email is already registered
+      if (isValid) {
+        try {
+          const { data: existingEmail } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('email', email)
+            .single();
+            
+          if (existingEmail) {
+            emailInput.parentElement.classList.add('error');
+            emailError.textContent = 'This email is already registered';
+          }
+        } catch (error) {
+          // Ignore errors from the check
+        }
       }
     });
   </script>
