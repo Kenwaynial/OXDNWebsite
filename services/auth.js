@@ -4,8 +4,12 @@ import { supabase } from '../config/supabase.js';
 const SITE_URL = 'https://oxdn.vercel.app';
 const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
 
-// Export supabase instance so other files can use it
-export { supabase };
+// Export all needed items in one place
+export { 
+    supabase,
+    SITE_URL, 
+    VERIFY_EMAIL_URL 
+};
 
 // Simple sign up function
 export const signUp = async (email, password) => {
@@ -275,10 +279,3 @@ export const validateResetToken = async (token) => {
         };
     }
 }
-
-// Export these for use in other files
-export { 
-    supabase,
-    SITE_URL, 
-    VERIFY_EMAIL_URL 
-};
