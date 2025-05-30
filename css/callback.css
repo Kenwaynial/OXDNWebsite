@@ -1,14 +1,12 @@
 :root {
-    --primary-purple: #8A2BE2;
-    --primary-purple-light: #9370DB;
-    --primary-purple-dark: #6A1B9A;
-    --gradient-purple: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-light) 100%);
-    --success-color: #10B981;
-    --error-color: #EF4444;
-    --background-dark: #1a1a1a;
     --primary-color: #8A2BE2;
+    --secondary-color: #9370DB;
+    --accent-color: #a210af;
     --text-color: #ffffff;
-    --card-bg: rgba(255, 255, 255, 0.1);
+    --background-dark: #0a0a0a;
+    --background-light: #111111;
+    --card-bg: rgba(17, 17, 17, 0.8);
+    --glow-color: rgba(138, 43, 226, 0.4);
 }
 
 /* Particles Animation */
@@ -26,7 +24,7 @@
     position: absolute;
     width: 6px;
     height: 6px;
-    background: var(--primary-purple);
+    background: var(--primary-color);
     border-radius: 50%;
     opacity: 0.3;
     animation: float 15s infinite linear;
@@ -89,14 +87,14 @@
 .logo {
     height: 60px;
     width: auto;
-    filter: drop-shadow(0 0 10px rgba(138, 43, 226, 0.5));
+    filter: drop-shadow(0 0 10px var(--glow-color));
 }
 
 .auth-form {
     background: var(--card-bg);
     padding: 2.5rem;
     border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15);
+    box-shadow: 0 10px 25px var(--glow-color);
     text-align: center;
     width: 100%;
     max-width: 500px;
@@ -115,9 +113,10 @@
     font-size: 2rem;
     margin-bottom: 1rem;
     font-weight: 600;
-    background: linear-gradient(45deg, #8A2BE2, #9370DB);
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 30px var(--glow-color);
 }
 
 .form-description {
@@ -130,6 +129,7 @@
 .auth-content {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 2rem;
 }
 
@@ -153,66 +153,6 @@
     color: var(--text-color);
     font-size: 1rem;
     opacity: 0.8;
-}
-
-.status-indicator {
-    display: flex;
-    justify-content: space-between;
-    position: relative;
-    margin-top: 1rem;
-}
-
-.status-indicator::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: rgba(138, 43, 226, 0.2);
-    transform: translateY(-50%);
-    z-index: 1;
-}
-
-.status-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    position: relative;
-    z-index: 2;
-    opacity: 0.5;
-    transition: all 0.3s ease;
-}
-
-.status-step.active {
-    opacity: 1;
-}
-
-.status-step i {
-    width: 40px;
-    height: 40px;
-    background: var(--card-bg);
-    border: 2px solid var(--primary-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary-color);
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-}
-
-.status-step.active i {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
-}
-
-.status-step span {
-    color: var(--text-color);
-    font-size: 0.9rem;
-    white-space: nowrap;
 }
 
 @keyframes spin {
@@ -287,7 +227,7 @@
 
 .action-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
+    box-shadow: 0 5px 15px var(--glow-color);
 }
 
 .action-button.secondary {
@@ -299,4 +239,12 @@
 .action-button.secondary:hover {
     background: var(--primary-color);
     color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .auth-form {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
 } 

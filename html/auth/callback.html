@@ -35,20 +35,6 @@
                     <div class="loading-spinner"></div>
                     <div class="loading-text">Verifying your credentials...</div>
                 </div>
-                <div class="status-indicator">
-                    <div class="status-step active">
-                        <i class="fas fa-user-check"></i>
-                        <span>Identity Verification</span>
-                    </div>
-                    <div class="status-step">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Security Check</span>
-                    </div>
-                    <div class="status-step">
-                        <i class="fas fa-gamepad"></i>
-                        <span>Gaming Profile</span>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -63,17 +49,6 @@
         const message = document.getElementById("message");
         const authForm = document.querySelector('.auth-form');
         const loadingSpinner = document.querySelector('.loading-spinner');
-        const statusSteps = document.querySelectorAll('.status-step');
-
-        function updateStatusStep(step) {
-            statusSteps.forEach((s, index) => {
-                if (index <= step) {
-                    s.classList.add('active');
-                } else {
-                    s.classList.remove('active');
-                }
-            });
-        }
 
         function showMessage(text, type, showButtons = false, buttons = []) {
             let buttonsHtml = '';
@@ -99,7 +74,6 @@
         // Handle the OAuth callback
         const handleCallback = async () => {
             try {
-                updateStatusStep(0);
                 // First, check if we're in the middle of a Google OAuth flow
                 const hash = window.location.hash;
                 const searchParams = new URLSearchParams(window.location.search);
@@ -114,7 +88,6 @@
                     }
 
                     if (session) {
-                        updateStatusStep(2);
                         showMessage("Authentication successful! Redirecting to dashboard...", "success");
                         setTimeout(() => {
                             window.location.href = "../dashboard.html";
@@ -128,7 +101,6 @@
                 }
 
                 // We're in an OAuth flow, handle it
-                updateStatusStep(1);
                 const { data, error } = await supabase.auth.getSession();
                 
                 if (error) {
@@ -187,7 +159,6 @@
                         return;
                     }
 
-                    updateStatusStep(2);
                     showMessage("Authentication successful! Redirecting to dashboard...", "success");
                     setTimeout(() => {
                         window.location.href = "../dashboard.html";
