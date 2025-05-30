@@ -69,7 +69,8 @@
   </main>
 
   <script type="module">
-    import { signUp } from '../services/auth.js';
+    import { registerWithEmail } from '../services/auth.js';
+    import { supabase } from '../config/supabase.js';
 
     const registerForm = document.getElementById("registerForm");
     const message = document.getElementById("message");
@@ -80,6 +81,39 @@
     const usernameError = document.getElementById("usernameError");
     const emailError = document.getElementById("emailError");
     const passwordError = document.getElementById("passwordError");
+    const lengthCheck = document.getElementById("lengthCheck");
+    const numberCheck = document.getElementById("numberCheck");
+    const specialCheck = document.getElementById("specialCheck");
+
+    // Validation functions
+    const validateUsername = (username) => {
+      return username.length >= 3 && /^[a-zA-Z0-9_]+$/.test(username);
+    };
+
+    const validateEmail = (email) => {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    };
+
+    const validatePassword = (password) => {
+      const hasLength = password.length >= 6;
+      const hasNumber = /\d/.test(password);
+      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+      lengthCheck.classList.toggle('valid', hasLength);
+      lengthCheck.classList.toggle('invalid', !hasLength);
+      numberCheck.classList.toggle('valid', hasNumber);
+      numberCheck.classList.toggle('invalid', !hasNumber);
+      specialCheck.classList.toggle('valid', hasSpecial);
+      specialCheck.classList.toggle('invalid', !hasSpecial);
+
+      return hasLength && hasNumber && hasSpecial;
+    };
+
+    // Real-time password validation
+    passwordInput.addEventListener('input', () => {
+      validatePassword(passwordInput.value);
+    });
 
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -183,7 +217,7 @@
       const isValid = validateEmail(email);
       
       emailInput.parentElement.classList.toggle('error', !isValid);
-      emailError.textContent = isValid ? '' : 'Please enter a valid Gmail address (example@gmail.com)';
+      emailError.textContent = isValid ? '' : 'Please enter a valid email address';
       
       // Check if email is already registered
       if (isValid) {
@@ -220,6 +254,40 @@
     .logo {
       height: 40px;
       width: auto;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #8A2BE2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 10px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .valid {
+      color: #4CAF50;
+    }
+
+    .invalid {
+      color: #f44336;
+    }
+
+    .verify-link {
+      display: none;
+      color: #8A2BE2;
+      text-decoration: none;
+      margin-top: 10px;
+    }
+
+    .verify-link.show {
+      display: inline-block;
     }
   </style>
 </body>
