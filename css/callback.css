@@ -9,6 +9,15 @@
     --glow-color: rgba(138, 43, 226, 0.4);
 }
 
+/* Base styles */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-dark);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 /* Particles Animation */
 .particles-container {
     position: fixed;
@@ -18,6 +27,7 @@
     height: 100%;
     overflow: hidden;
     z-index: 0;
+    background-color: var(--background-dark);
 }
 
 .particle {
