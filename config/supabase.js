@@ -19,9 +19,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     redirectTo: VERIFY_EMAIL_URL,
-    // Force the site URL to be used in email links
     site: SITE_URL,
-    // Additional options to ensure production URL is used
+    // Add specific configuration for password reset
+    passwordReset: {
+      redirectTo: `${SITE_URL}/html/auth/resetPassword.html`
+    },
     cookieOptions: {
       domain: '.vercel.app',
       path: '/',
@@ -184,4 +186,68 @@ export const subscribeToUserStats = (userId, callback) => {
       callback
     )
     .subscribe()
+}
+
+// Add password reset helpers
+export const resetPassword = async (email) => {
+  try {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${SITE_URL}/html/auth/resetPassword.html`
+    });
+
+    if (error) throw error;
+
+    return { 
+      data, 
+      error: null,
+      message: 'Password reset instructions sent to your email' 
+    };
+  } catch (error) {
+    return { 
+      data: null, 
+      error,
+      message: error.message || 'Failed to send reset instructions' 
+    };
+  }
+}
+
+export const verifyResetToken = async (token, type) => {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      token,
+      type
+    });
+
+    if (error) throw error;
+
+    return { data, error: null };
+  } catch (error) {
+    return { 
+      data: null, 
+      error,
+      message: error.message || 'Invalid or expired reset token' 
+    };
+  }
+}
+
+export const updateUserPassword = async (password) => {
+  try {
+    const { data, error } = await supabase.auth.updateUser({
+      password
+    });
+
+    if (error) throw error;
+
+    return { 
+      data, 
+      error: null,
+      message: 'Password updated successfully' 
+    };
+  } catch (error) {
+    return { 
+      data: null, 
+      error,
+      message: error.message || 'Failed to update password' 
+    };
+  }
 }
