@@ -195,18 +195,17 @@
       // Check if username is taken
       if (isValid && username.length >= 3) {
         try {
-          const { data: existingUsername } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('username')
-            .eq('username', username)
-            .single();
+            .eq('username', username);
             
-          if (existingUsername) {
+          if (data && data.length > 0) {
             usernameInput.parentElement.classList.add('error');
             usernameError.textContent = 'This username is already taken';
           }
         } catch (error) {
-          // Ignore errors from the check
+          console.error('Username check error:', error);
         }
       }
     });
@@ -222,18 +221,17 @@
       // Check if email is already registered
       if (isValid) {
         try {
-          const { data: existingEmail } = await supabase
+          const { data, error } = await supabase
             .from('profiles')
             .select('email')
-            .eq('email', email)
-            .single();
+            .eq('email', email);
             
-          if (existingEmail) {
+          if (data && data.length > 0) {
             emailInput.parentElement.classList.add('error');
             emailError.textContent = 'This email is already registered';
           }
         } catch (error) {
-          // Ignore errors from the check
+          console.error('Email check error:', error);
         }
       }
     });

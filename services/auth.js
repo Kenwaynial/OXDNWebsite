@@ -94,13 +94,20 @@ export const signInWithGoogle = async () => {
 export const registerWithEmail = async (email, password, username) => {
   try {
     // First check if email already exists
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
       .select('email')
       .eq('email', email)
-      .single()
 
-    if (existingUser) {
+    if (checkError) {
+      console.error('Email check error:', checkError)
+      return {
+        success: false,
+        message: 'Error checking email availability. Please try again.'
+      }
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
       return {
         success: false,
         message: 'This email is already registered. Please use a different email or try logging in.'
@@ -108,13 +115,20 @@ export const registerWithEmail = async (email, password, username) => {
     }
 
     // Check if username is already taken
-    const { data: existingUsername, error: usernameError } = await supabase
+    const { data: existingUsernames, error: usernameError } = await supabase
       .from('profiles')
       .select('username')
       .eq('username', username)
-      .single()
 
-    if (existingUsername) {
+    if (usernameError) {
+      console.error('Username check error:', usernameError)
+      return {
+        success: false,
+        message: 'Error checking username availability. Please try again.'
+      }
+    }
+
+    if (existingUsernames && existingUsernames.length > 0) {
       return {
         success: false,
         message: 'This username is already taken. Please choose a different username.'
