@@ -181,35 +181,7 @@ export const registerWithEmail = async (email, password, username) => {
       throw error
     }
 
-    console.log('User created successfully, creating profile');
-
-    // Create profile using the stored procedure
-    if (data.user) {
-      const { error: profileError } = await supabase.rpc('create_profile_for_user', {
-        user_email: email,
-        user_id: data.user.id,
-        user_metadata: {
-          username: username,
-          site_url: SITE_URL
-        }
-      })
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // If profile creation fails, delete the auth user
-        try {
-          await supabase.auth.admin.deleteUser(data.user.id)
-        } catch (deleteError) {
-          console.error('Error deleting auth user after profile creation failure:', deleteError)
-        }
-        return {
-          success: false,
-          message: 'Failed to create user profile. Please try again.'
-        }
-      }
-
-      console.log('Profile created successfully');
-    }
+    console.log('User created successfully');
 
     return {
       success: true,
