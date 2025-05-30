@@ -98,8 +98,20 @@
                 if (sessionError) throw sessionError;
 
                 if (session?.user?.email_confirmed_at) {
+                    // Update profile email_verified status
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ email_verified: true })
+                        .eq('id', session.user.id);
+
+                    if (updateError) {
+                        console.error('Profile update error:', updateError);
+                    }
+
                     statusMessage.textContent = "Email verified successfully!";
                     statusMessage.classList.add('success');
+                    
+                    // Wait a moment before redirecting
                     setTimeout(() => {
                         window.location.href = "dashboard.html";
                     }, 2000);
@@ -185,6 +197,8 @@
 
                 if (session?.user) {
                     userEmail.textContent = session.user.email;
+                    // Check verification status immediately and then every 5 seconds
+                    await checkVerification();
                     setInterval(checkVerification, 5000);
                 } else if (pendingEmail) {
                     userEmail.textContent = pendingEmail;
