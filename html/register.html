@@ -70,6 +70,7 @@
 
   <script type="module">
     import { registerWithEmail } from '../services/auth.js';
+    import { supabase } from '../config/supabase.js';
 
     const registerForm = document.getElementById("registerForm");
     const message = document.getElementById("message");

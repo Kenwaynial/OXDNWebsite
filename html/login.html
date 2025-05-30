@@ -61,6 +61,7 @@
 
   <script type="module">
     import { signIn, signInWithGoogle } from '../services/auth.js';
+    import { supabase } from '../config/supabase.js';
 
     const googleLoginBtn = document.getElementById("googleLoginBtn");
     const loginForm = document.getElementById("loginForm");
