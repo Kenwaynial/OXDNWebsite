@@ -231,31 +231,23 @@ export const registerWithEmail = async (email, password, username) => {
 
 export const resetPassword = async (email) => {
   try {
-    const options = {
-      redirectTo: `${SITE_URL}/html/auth/resetPassword.html`,
-      data: {
-        timestamp: new Date().getTime()
-      }
-    };
+    const timestamp = Date.now();
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${SITE_URL}/html/auth/resetPassword.html?t=${timestamp}`
+    });
 
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, options);
-
-    if (error) {
-      console.error('Password reset request error:', error);
-      throw error;
-    }
+    if (error) throw error;
 
     return { 
       data, 
       error: null,
-      message: 'Password reset link sent! Please check your email.' 
+      message: 'Password reset link sent! Link expires in 5 minutes.' 
     };
   } catch (error) {
-    console.error('Reset password error:', error);
     return { 
       data: null, 
       error,
-      message: error.message || 'Failed to send reset link. Please try again.' 
+      message: error.message || 'Failed to send reset link' 
     };
   }
 }
