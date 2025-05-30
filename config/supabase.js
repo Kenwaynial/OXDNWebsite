@@ -11,6 +11,7 @@ const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
 const isDevMode = typeof window !== 'undefined' && 
                  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
+// Create Supabase client with explicit site URL
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -18,8 +19,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     redirectTo: VERIFY_EMAIL_URL,
-    // This ensures the site URL is used in email links
-    site: SITE_URL
+    // Force the site URL to be used in email links
+    site: SITE_URL,
+    // Additional options to ensure production URL is used
+    cookieOptions: {
+      domain: '.vercel.app',
+      path: '/',
+      sameSite: 'lax'
+    }
+  },
+  global: {
+    headers: {
+      'x-site-url': SITE_URL
+    }
   }
 })
 

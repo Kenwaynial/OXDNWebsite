@@ -1,4 +1,4 @@
-import { supabase, VERIFY_EMAIL_URL } from '../config/supabase.js'
+import { supabase, VERIFY_EMAIL_URL, SITE_URL } from '../config/supabase.js'
 
 // Simple sign up function
 export const signUp = async (email, password) => {
@@ -7,7 +7,10 @@ export const signUp = async (email, password) => {
       email,
       password,
       options: {
-        emailRedirectTo: VERIFY_EMAIL_URL
+        emailRedirectTo: VERIFY_EMAIL_URL,
+        data: {
+          site_url: SITE_URL
+        }
       }
     })
     
@@ -64,7 +67,10 @@ export const resendVerification = async (email) => {
       type: 'signup',
       email,
       options: {
-        emailRedirectTo: VERIFY_EMAIL_URL
+        emailRedirectTo: VERIFY_EMAIL_URL,
+        data: {
+          site_url: SITE_URL
+        }
       }
     })
     
@@ -96,7 +102,8 @@ export const registerWithEmail = async (email, password, username) => {
       password,
       options: {
         data: {
-          username: username
+          username: username,
+          site_url: SITE_URL
         },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
@@ -115,7 +122,8 @@ export const registerWithEmail = async (email, password, username) => {
         user_email: email,
         user_id: data.user.id,
         user_metadata: {
-          username: username
+          username: username,
+          site_url: SITE_URL
         }
       })
 
