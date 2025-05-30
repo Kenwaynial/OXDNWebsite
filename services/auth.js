@@ -216,4 +216,16 @@ export const registerWithEmail = async (email, password, username) => {
       message: error.message || 'An error occurred during registration. Please try again.'
     }
   }
-} 
+}
+
+export const resetPassword = async (email) => {
+  try {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://oxdn.vercel.app/html/auth/resetPassword.html'
+    });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
+}
