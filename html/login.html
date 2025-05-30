@@ -68,31 +68,6 @@
     const message = document.getElementById("message");
     const forgotPasswordLink = document.getElementById("forgotPasswordLink");
 
-    // Check for dev mode - more lenient check
-    const isDevMode = window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1' ||
-                     window.location.hostname.includes('vercel.app') ||
-                     window.location.pathname.includes('/OXDNWebsite/');
-
-    // Handle dev mode redirect
-    function handleDevModeRedirect() {
-      if (isDevMode) {
-        message.innerHTML = `<div class="dev-mode-notice">Dev Mode Active - Authentication Bypassed</div>`;
-        message.classList.add("success");
-        loginForm.style.display = 'none';
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 2000);
-        return true;
-      }
-      return false;
-    }
-
-    // Check dev mode on page load
-    if (handleDevModeRedirect()) {
-      return;
-    }
-
     // Forgot password
     forgotPasswordLink.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -122,12 +97,6 @@
     googleLoginBtn.addEventListener("click", async () => {
       try {
         message.textContent = "Connecting to Google...";
-        
-        // Check for dev mode
-        if (handleDevModeRedirect()) {
-          return;
-        }
-
         const { data, error } = await signInWithGoogle();
         
         if (error) throw error;
