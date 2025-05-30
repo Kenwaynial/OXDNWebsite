@@ -127,6 +127,23 @@
             font-size: 0.8rem;
             z-index: 2;
         }
+
+        .retry-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -153,8 +170,11 @@
         const authForm = document.querySelector('.auth-form');
         const loadingSpinner = document.querySelector('.loading-spinner');
 
-        function showMessage(text, type) {
-            message.innerHTML = `<div class="message ${type}">${text}</div>`;
+        function showMessage(text, type, showRetry = false) {
+            message.innerHTML = `
+                <div class="message ${type}">${text}</div>
+                ${showRetry ? '<button class="retry-button" onclick="window.location.href=\'../login.html\'">Try Again</button>' : ''}
+            `;
             message.classList.add(type);
             if (type === 'success') {
                 loadingSpinner.style.display = 'none';
@@ -164,13 +184,38 @@
         // Handle the OAuth callback
         const handleCallback = async () => {
             try {
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
-                if (sessionError) {
-                    throw sessionError;
+                // First, check if we're in the middle of a Google OAuth flow
+                const hash = window.location.hash;
+                const searchParams = new URLSearchParams(window.location.search);
+                const isOAuthFlow = hash || searchParams.has('code') || searchParams.has('error');
+
+                if (!isOAuthFlow) {
+                    // If we're not in an OAuth flow, check for an existing session
+                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                    
+                    if (sessionError) {
+                        throw sessionError;
+                    }
+
+                    if (session) {
+                        showMessage("Authentication successful! Redirecting to dashboard...", "success");
+                        setTimeout(() => {
+                            window.location.href = "../dashboard.html";
+                        }, 2000);
+                    } else {
+                        showMessage("Please complete the Google sign-in process", "error", true);
+                    }
+                    return;
                 }
 
-                if (session) {
+                // We're in an OAuth flow, handle it
+                const { data, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    throw error;
+                }
+
+                if (data?.session) {
                     // Check if we have a provider token in session storage
                     const providerToken = sessionStorage.getItem('provider_token');
                     
@@ -191,33 +236,22 @@
                         window.location.href = "../dashboard.html";
                     }, 2000);
                 } else {
-                    // Check if we have a hash in the URL (OAuth callback)
-                    const hash = window.location.hash;
-                    if (hash) {
-                        const { data, error } = await supabase.auth.getSession();
-                        if (error) throw error;
-                        
-                        if (data?.session) {
-                            showMessage("Authentication successful! Redirecting to dashboard...", "success");
-                            setTimeout(() => {
-                                window.location.href = "../dashboard.html";
-                            }, 2000);
+                    // If we have an error parameter, it means the user cancelled or there was an error
+                    if (searchParams.has('error')) {
+                        const error = searchParams.get('error');
+                        if (error === 'access_denied') {
+                            showMessage("Google sign-in was cancelled. Please try again.", "error", true);
                         } else {
-                            throw new Error("Session not found after OAuth callback");
+                            showMessage("Authentication failed. Please try again.", "error", true);
                         }
                     } else {
-                        showMessage("Authentication failed. Redirecting to login...", "error");
-                        setTimeout(() => {
-                            window.location.href = "../login.html";
-                        }, 2000);
+                        // If we don't have a session but we're in the OAuth flow, we need to wait for the user to select their account
+                        showMessage("Please select your Google account to continue", "error", true);
                     }
                 }
             } catch (error) {
                 console.error('Auth callback error:', error);
-                showMessage("Authentication failed. Please try again.", "error");
-                setTimeout(() => {
-                    window.location.href = "../login.html";
-                }, 2000);
+                showMessage("Authentication failed. Please try again.", "error", true);
             }
         };
 
