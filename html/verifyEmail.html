@@ -156,6 +156,33 @@
                 
                 if (sessionError) throw sessionError;
 
+                // Check if we're in local development
+                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                console.log('Environment check:', { 
+                    hostname: window.location.hostname,
+                    isLocalDev,
+                    pendingEmail,
+                    sessionEmail: session?.user?.email
+                });
+
+                // Development user bypass - works in both local and production
+                if (pendingEmail === 'dev@oxdn.com' || session?.user?.email === 'dev@oxdn.com') {
+                    console.log('Development user detected');
+                    statusMessage.textContent = "Development user detected - Click 'Go to Dashboard' to bypass verification";
+                    statusMessage.classList.add('success');
+                    devModeBtn.style.display = 'block';
+                    return;
+                }
+
+                // Local development bypass
+                if (isLocalDev) {
+                    console.log('Local development detected');
+                    statusMessage.textContent = "Local development detected - Click 'Go to Dashboard' to bypass verification";
+                    statusMessage.classList.add('success');
+                    devModeBtn.style.display = 'block';
+                    return;
+                }
+
                 if (session?.user) {
                     userEmail.textContent = session.user.email;
                     setInterval(checkVerification, 5000);

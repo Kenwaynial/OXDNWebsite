@@ -3,25 +3,28 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const supabaseUrl = 'https://ncehdvoeausqrzjohgll.supabase.co'
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jZWhkdm9lYXVzcXJ6am9oZ2xsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1NDYwODIsImV4cCI6MjA2NDEyMjA4Mn0.DkV7MvbzShMu8kps7bzad25wVjMH-N6l-MHagaKfvF0'
 
-// Always use production URL for email verification
-const PRODUCTION_URL = 'https://oxdn.vercel.app';
+// Site URL configuration
+const SITE_URL = 'https://oxdn.vercel.app';
+const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
 
 // Determine if we're in development mode
 const isDevMode = typeof window !== 'undefined' && 
                  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-// Use production URL for email redirects, but keep local development functionality
-const redirectTo = isDevMode 
-  ? 'https://oxdn.vercel.app/html/verifyEmail.html'
-  : window.location.origin + '/html/verifyEmail.html';
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    redirectTo: VERIFY_EMAIL_URL,
+    // This ensures the site URL is used in email links
+    site: SITE_URL
   }
 })
+
+// Export the URLs for use in other files
+export { SITE_URL, VERIFY_EMAIL_URL, isDevMode };
 
 // Auth helpers
 export const signUp = async (email, password) => {
