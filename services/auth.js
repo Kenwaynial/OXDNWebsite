@@ -38,6 +38,9 @@ export const getCurrentUser = async () => {
 
 export const registerWithEmail = async (email, password, username) => {
   try {
+    // Store email in sessionStorage for verification page
+    sessionStorage.setItem('pendingVerificationEmail', email);
+
     // Sign up the user
     const { data, error } = await supabase.auth.signUp({
       email,
