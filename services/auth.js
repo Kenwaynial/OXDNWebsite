@@ -38,7 +38,7 @@ export const getCurrentUser = async () => {
 
 export const registerWithEmail = async (email, password, username) => {
   try {
-    // First, sign up the user
+    // Sign up the user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -56,29 +56,16 @@ export const registerWithEmail = async (email, password, username) => {
       throw error
     }
 
-    // Create a profile for the user
+    // Create profile using the stored procedure
     if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user.id,
-            username: username,
-            email: email,
-            role: 'member',
-            avatar_url: null,
-            discord_id: null,
-            steam_id: null,
-            favorite_games: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ])
+      const { error: profileError } = await supabase.rpc('create_profile_for_user', {
+        user_id: data.user.id,
+        user_email: email,
+        user_metadata: { username }
+      })
 
       if (profileError) {
         console.error('Profile creation error:', profileError)
-        // Instead of trying to delete the user (which requires admin rights),
-        // we'll just return an error and let the user try again
         throw new Error('Failed to create user profile. Please try again.')
       }
     }
