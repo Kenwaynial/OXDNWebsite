@@ -100,6 +100,42 @@
                     return;
                 }
 
+                // Check for error parameters
+                if (searchParams.has('error')) {
+                    const error = searchParams.get('error');
+                    const errorCode = searchParams.get('error_code');
+                    const errorDescription = searchParams.get('error_description');
+
+                    if (error === 'server_error' && errorCode === 'unexpected_failure') {
+                        // Handle database error for new users
+                        showMessage(
+                            "Welcome to OXDN! Let's set up your profile.", 
+                            "info", 
+                            true, 
+                            [
+                                { 
+                                    text: "Complete Registration", 
+                                    href: "../register.html", 
+                                    class: "primary" 
+                                },
+                                { text: "Back to Login", href: "../login.html", class: "secondary" }
+                            ]
+                        );
+                        return;
+                    }
+
+                    if (error === 'access_denied') {
+                        showMessage("Google sign-in was cancelled. Please try again.", "error", true, [
+                            { text: "Try Again", href: "../login.html" }
+                        ]);
+                    } else {
+                        showMessage("Authentication failed. Please try again.", "error", true, [
+                            { text: "Try Again", href: "../login.html" }
+                        ]);
+                    }
+                    return;
+                }
+
                 // We're in an OAuth flow, handle it
                 const { data, error } = await supabase.auth.getSession();
                 
@@ -164,24 +200,9 @@
                         window.location.href = "../dashboard.html";
                     }, 2000);
                 } else {
-                    // If we have an error parameter, it means the user cancelled or there was an error
-                    if (searchParams.has('error')) {
-                        const error = searchParams.get('error');
-                        if (error === 'access_denied') {
-                            showMessage("Google sign-in was cancelled. Please try again.", "error", true, [
-                                { text: "Try Again", href: "../login.html" }
-                            ]);
-                        } else {
-                            showMessage("Authentication failed. Please try again.", "error", true, [
-                                { text: "Try Again", href: "../login.html" }
-                            ]);
-                        }
-                    } else {
-                        // If we don't have a session but we're in the OAuth flow, we need to wait for the user to select their account
-                        showMessage("Please select your Google account to continue", "error", true, [
-                            { text: "Try Again", href: "../login.html" }
-                        ]);
-                    }
+                    showMessage("Please select your Google account to continue", "error", true, [
+                        { text: "Try Again", href: "../login.html" }
+                    ]);
                 }
             } catch (error) {
                 console.error('Auth callback error:', error);
