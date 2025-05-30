@@ -99,31 +99,47 @@ main {
 }
 
 .google-btn {
-  width: 100%;
-  padding: 1rem;
-  background-color: #1a1a1a;
-  color: #ffffff;
-  border: 1px solid #333333;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  width: 100%;
+  padding: 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
 .google-btn:hover {
-  background-color: #222222;
-  border-color: #8A2BE2;
-  box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+  background-color: #f5f5f5;
 }
 
 .google-btn img {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.divider span {
+  padding: 0 10px;
+  color: #666;
+  font-size: 14px;
 }
 
 #message {

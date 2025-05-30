@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication Callback</title>
+  <script type="module">
+    import { supabase } from '../../config/supabase.js'
+
+    // Handle the OAuth callback
+    async function handleCallback() {
+      const { data, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('Error getting session:', error.message)
+        window.location.href = '/login.html'
+        return
+      }
+
+      if (data?.session) {
+        // Successful login
+        window.location.href = '/dashboard.html'
+      } else {
+        // No session found
+        window.location.href = '/login.html'
+      }
+    }
+
+    // Run the callback handler
+    handleCallback()
+  </script>
+</head>
+<body>
+  <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <p>Completing authentication...</p>
+  </div>
+</body>
+</html> 

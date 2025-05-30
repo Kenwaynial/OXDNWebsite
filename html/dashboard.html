@@ -94,18 +94,14 @@
     <div id="error" class="error"></div>
 
     <script type="module">
-        import { auth } from '../config/firebase.js';
-        import { onAuthStateChanged, logout } from '../services/auth.js';
-        import { getCurrentUserData } from '../services/user.js';
-        import { isSpecialAccount } from '../config/specialAccounts.js';
+        import { getCurrentUser, signOut } from '../services/auth.js';
+        import { getUserProfile } from '../services/profile.js';
+        import { updateOnlineStatus, subscribeToOnlineStatus } from '../services/status.js';
+        import { getUserStats } from '../services/stats.js';
 
-        // Check if we're in development mode (running on localhost:3000 or 127.0.0.1:3000)
+        // Check if we're in development mode
         const isDevMode = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && 
-                         window.location.port === '3000' && 
-                         window.location.pathname.includes('/PERSONAL/OXDN/');
-
-        // Development bypass
-        const DEV_BYPASS = true; // Set to false in production
+                         window.location.port === '3000';
 
         // UI Elements
         const userName = document.getElementById('userName');
@@ -159,40 +155,38 @@
         }
 
         // Update UI with user data
-        async function updateUserData(user) {
+        async function updateUserData() {
             try {
                 showLoading();
-                let userData;
                 
-                if (isDevMode) {
-                    // Use mock data in development mode
-                    userData = {
-                        username: 'Dev User',
-                        email: 'dev@example.com',
-                        role: 'Developer',
-                        lastLogin: new Date().toISOString(),
-                        createdAt: new Date().toISOString(),
-                        isActive: true
-                    };
-                } else {
-                    const response = await getCurrentUserData();
-                    if (!response.success) {
-                        throw new Error("Failed to get user data");
-                    }
-                    userData = response.data;
+                // Get current user
+                const user = await getCurrentUser();
+                if (!user) {
+                    throw new Error("No user is currently signed in");
                 }
 
+                // Get user profile
+                const { data: profile, error: profileError } = await getUserProfile(user.id);
+                if (profileError) throw profileError;
+
+                // Get user stats
+                const { data: stats, error: statsError } = await getUserStats(user.id);
+                if (statsError) throw statsError;
+
+                // Update online status
+                await updateOnlineStatus(user.id, 'online');
+
                 // Update UI elements
-                const displayName = userData.username || user?.displayName || user?.email?.split('@')[0] || 'User';
+                const displayName = profile.username || user.email?.split('@')[0] || 'User';
                 userName.textContent = displayName;
                 welcomeName.textContent = displayName;
-                userEmail.textContent = userData.email || user?.email || '-';
+                userEmail.textContent = user.email || '-';
                 userAvatar.textContent = getInitials(displayName);
-                lastLogin.textContent = formatDate(userData.lastLogin);
-                memberSince.textContent = formatDate(userData.createdAt);
+                lastLogin.textContent = formatDate(stats.last_activity);
+                memberSince.textContent = formatDate(profile.created_at);
                 
                 // Update account status
-                const isActive = userData.isActive !== false; // Default to true if not specified
+                const isActive = true; // We can add more logic here if needed
                 const statusText = isActive ? 'Active Account' : 'Inactive Account';
                 const statusClass = isActive ? 'active' : 'inactive';
                 accountStatus.textContent = statusText;
@@ -220,41 +214,70 @@
             }
         }
 
-        // Auth State Observer
+        // Initialize dashboard
         if (isDevMode) {
             // Skip authentication in development mode
             updateUserData();
         } else {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // Check if user is josekent804@gmail.com
-                    if (user.email === 'josekent804@gmail.com') {
-                        window.location.href = 'adminDash.html';
-                        return;
-                    }
-                    updateUserData(user);
-                } else {
-                    window.location.href = 'login.html';
-                }
-            });
+            // Check authentication and update data
+            const user = await getCurrentUser();
+            if (user) {
+                updateUserData();
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Set up real-time subscriptions
+        if (!isDevMode) {
+            const user = await getCurrentUser();
+            if (user) {
+                // Subscribe to online status changes
+                subscribeToOnlineStatus((payload) => {
+                    console.log('Online status changed:', payload);
+                    // Update UI as needed
+                });
+            }
         }
 
         // Logout Handler
         logoutBtn.addEventListener('click', async () => {
             if (isDevMode) {
-                // Just redirect to login in development mode
                 window.location.href = 'login.html';
                 return;
             }
             
             try {
                 showLoading();
-                await logout();
+                const { error } = await signOut();
+                if (error) throw error;
+                
+                // Update online status to offline
+                const user = await getCurrentUser();
+                if (user) {
+                    await updateOnlineStatus(user.id, 'offline');
+                }
+                
                 window.location.href = 'login.html';
             } catch (error) {
                 console.error('Logout error:', error);
-                showError('Error logging out');
+                showError(error.message);
                 hideLoading();
+            }
+        });
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'hidden') {
+                const user = await getCurrentUser();
+                if (user) {
+                    await updateOnlineStatus(user.id, 'away');
+                }
+            } else if (document.visibilityState === 'visible') {
+                const user = await getCurrentUser();
+                if (user) {
+                    await updateOnlineStatus(user.id, 'online');
+                }
             }
         });
     </script>

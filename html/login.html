@@ -8,6 +8,7 @@
   <link rel="apple-touch-icon" href="../assets/logo.png">
   <link rel="stylesheet" href="../css/homepage.css" />
   <link rel="stylesheet" href="../css/login.css" />
+  <script type="module" src="../services/auth.js"></script>
 </head>
 <body>
   <header>
@@ -59,7 +60,7 @@
   </main>
 
   <script type="module">
-    import { loginWithEmail, loginWithGoogle, resetPassword } from '../services/auth.js';
+    import { signIn, signInWithGoogle } from '../services/auth.js';
 
     const googleLoginBtn = document.getElementById("googleLoginBtn");
     const loginForm = document.getElementById("loginForm");
@@ -81,15 +82,15 @@
     googleLoginBtn.addEventListener("click", async () => {
       try {
         message.textContent = "Connecting to Google...";
-        const { success, message: responseMessage } = await loginWithGoogle();
+        const { data, error } = await signInWithGoogle();
         
-        if (success) {
-          message.textContent = responseMessage;
-          message.classList.add("success");
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 2000);
-        }
+        if (error) throw error;
+        
+        message.textContent = "Login successful!";
+        message.classList.add("success");
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 2000);
       } catch (error) {
         message.textContent = error.message;
         message.classList.add("error");
@@ -113,16 +114,16 @@
 
       try {
         message.textContent = "Logging in...";
-        const { success, message: responseMessage } = await loginWithEmail(email, password);
+        const { data, error } = await signIn(email, password);
+
+        if (error) throw error;
         
-        if (success) {
-          message.textContent = responseMessage;
-          message.classList.add("success");
-          loginForm.reset();
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 2000);
-        }
+        message.textContent = "Login successful!";
+        message.classList.add("success");
+        loginForm.reset();
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 2000);
       } catch (error) {
         // Check if the error is about unverified email
         if (error.message.includes('verify your email')) {
@@ -150,7 +151,8 @@
 
       try {
         message.textContent = "Sending password reset email...";
-        await resetPassword(email);
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        if (error) throw error;
         message.textContent = "Password reset email sent! Check your inbox.";
         message.classList.add("success");
       } catch (error) {

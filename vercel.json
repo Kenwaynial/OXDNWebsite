@@ -12,6 +12,10 @@
       "dest": "/html/homepage.html"
     },
     {
+      "src": "/auth/callback",
+      "dest": "/html/auth/callback.html"
+    },
+    {
       "src": "/css/(.*)",
       "dest": "/css/$1",
       "headers": {
