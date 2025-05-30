@@ -77,8 +77,8 @@ export const registerWithEmail = async (email, password, username) => {
 
       if (profileError) {
         console.error('Profile creation error:', profileError)
-        // If profile creation fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(data.user.id)
+        // Instead of trying to delete the user (which requires admin rights),
+        // we'll just return an error and let the user try again
         throw new Error('Failed to create user profile. Please try again.')
       }
     }
