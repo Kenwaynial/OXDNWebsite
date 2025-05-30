@@ -66,6 +66,7 @@ export const registerWithEmail = async (email, password, username) => {
     // Create profile using the new handle_registration function
     if (data.user) {
       const { error: profileError } = await supabase.rpc('handle_registration', {
+        user_id: data.user.id,
         user_email: email,
         user_metadata: { username }
       })
