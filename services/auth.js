@@ -49,7 +49,12 @@ export const registerWithEmail = async (email, password, username) => {
       }
     })
 
-    if (error) throw error
+    if (error) {
+      if (error.message.includes('For security purposes')) {
+        throw new Error('Please wait a moment before trying again.')
+      }
+      throw error
+    }
 
     // Create a profile for the user
     if (data.user) {
@@ -72,7 +77,9 @@ export const registerWithEmail = async (email, password, username) => {
 
       if (profileError) {
         console.error('Profile creation error:', profileError)
-        throw profileError
+        // If profile creation fails, we should clean up the auth user
+        await supabase.auth.admin.deleteUser(data.user.id)
+        throw new Error('Failed to create user profile. Please try again.')
       }
     }
 
@@ -85,7 +92,7 @@ export const registerWithEmail = async (email, password, username) => {
     console.error('Registration error:', error)
     return {
       success: false,
-      message: error.message
+      message: error.message || 'An error occurred during registration. Please try again.'
     }
   }
 } 
