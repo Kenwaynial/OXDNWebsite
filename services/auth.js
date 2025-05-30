@@ -220,12 +220,63 @@ export const registerWithEmail = async (email, password, username) => {
 
 export const resetPassword = async (email) => {
   try {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://oxdn.vercel.app/html/auth/resetPassword.html'
-    });
-    if (error) throw error;
-    return { data, error: null };
+    // Set explicit options for password reset
+    const options = {
+      redirectTo: 'https://oxdn.vercel.app/html/auth/resetPassword.html',
+      captureTime: true, // Add timestamp to track when reset was requested
+      data: {
+        requestTime: new Date().getTime(), // Add timestamp to metadata
+        expiresIn: 300 // 5 minutes in seconds
+      }
+    };
+
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, options);
+
+    if (error) {
+      console.error('Password reset request error:', error);
+      throw error;
+    }
+
+    return { 
+      data, 
+      error: null,
+      message: 'Password reset link sent! Please check your email. Link expires in 5 minutes.' 
+    };
   } catch (error) {
-    return { data: null, error };
+    console.error('Reset password error:', error);
+    return { 
+      data: null, 
+      error,
+      message: error.message || 'Failed to send reset link. Please try again.' 
+    };
+  }
+}
+
+// Add a new function to validate reset tokens
+export const validateResetToken = async (token) => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error) throw error;
+
+    // Check if the token is within the 5-minute window
+    const metadata = user?.user_metadata;
+    if (metadata?.requestTime) {
+      const now = new Date().getTime();
+      const requestTime = parseInt(metadata.requestTime);
+      const timeElapsed = (now - requestTime) / 1000; // Convert to seconds
+
+      if (timeElapsed > 300) { // 5 minutes
+        throw new Error('Reset link has expired. Please request a new one.');
+      }
+    }
+
+    return { isValid: true, error: null };
+  } catch (error) {
+    console.error('Token validation error:', error);
+    return { 
+      isValid: false, 
+      error: error.message || 'Invalid or expired reset link.'
+    };
   }
 }
