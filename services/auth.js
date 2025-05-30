@@ -38,6 +38,14 @@ export const getCurrentUser = async () => {
 
 export const registerWithEmail = async (email, password, username) => {
   try {
+    // Check if email exists and is unverified
+    const { data: existingUser, error: checkError } = await supabase.auth.admin.getUserByEmail(email)
+    
+    if (existingUser && !existingUser.email_confirmed_at) {
+      // If user exists but is unverified, delete the old account
+      await supabase.auth.admin.deleteUser(existingUser.id)
+    }
+
     // Store email in sessionStorage for verification page
     sessionStorage.setItem('pendingVerificationEmail', email);
 
@@ -86,6 +94,28 @@ export const registerWithEmail = async (email, password, username) => {
     return {
       success: false,
       message: error.message || 'An error occurred during registration. Please try again.'
+    }
+  }
+}
+
+export const resendVerificationEmail = async (email) => {
+  try {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email
+    })
+
+    if (error) throw error
+
+    return {
+      success: true,
+      message: 'Verification email sent! Please check your inbox.'
+    }
+  } catch (error) {
+    console.error('Resend verification error:', error)
+    return {
+      success: false,
+      message: error.message || 'Failed to resend verification email. Please try again.'
     }
   }
 } 

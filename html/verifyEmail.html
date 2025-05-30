@@ -58,6 +58,7 @@
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm'
+        import { resendVerificationEmail } from '../services/auth.js'
 
         const supabaseUrl = 'https://ncehdvoeausqrzjohgll.supabase.co'
         const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jZWhkdm9lYXVzcXJ6am9oZ2xsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1NDYwODIsImV4cCI6MjA2NDEyMjA4Mn0.DkV7MvbzShMu8kps7bzad25wVjMH-N6l-MHagaKfvF0'
@@ -114,11 +115,11 @@
                     return;
                 }
 
-                const { data: { user }, error } = await supabase.auth.getUser();
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
-                if (error) throw error;
+                if (sessionError) throw sessionError;
 
-                if (user?.email_confirmed_at) {
+                if (session?.user?.email_confirmed_at) {
                     statusMessage.textContent = "Email verified successfully!";
                     statusMessage.classList.add('success');
                     // Redirect to dashboard after 2 seconds
@@ -138,7 +139,7 @@
         }
 
         // Resend verification email
-        async function resendVerification() {
+        async function handleResendVerification() {
             try {
                 showLoading();
                 
@@ -156,15 +157,14 @@
                     return;
                 }
 
-                const { error } = await supabase.auth.resend({
-                    type: 'signup',
-                    email: pendingEmail
-                });
-
-                if (error) throw error;
-
-                statusMessage.textContent = "Verification email sent! Please check your inbox.";
-                statusMessage.classList.remove('success');
+                const result = await resendVerificationEmail(pendingEmail);
+                
+                if (result.success) {
+                    statusMessage.textContent = result.message;
+                    statusMessage.classList.remove('success');
+                } else {
+                    throw new Error(result.message);
+                }
             } catch (error) {
                 console.error('Resend verification error:', error);
                 showError('Error sending verification email');
@@ -174,7 +174,7 @@
         }
 
         // Event Listeners
-        resendBtn.addEventListener('click', resendVerification);
+        resendBtn.addEventListener('click', handleResendVerification);
         checkBtn.addEventListener('click', checkVerification);
         devModeBtn.addEventListener('click', () => {
             window.location.href = 'dashboard.html';
@@ -188,23 +188,23 @@
                 // Check if we have a pending verification email
                 const pendingEmail = sessionStorage.getItem('pendingVerificationEmail');
                 
-                // Get current user
-                const { data: { user }, error } = await supabase.auth.getUser();
+                // Get current session
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
-                if (error) throw error;
+                if (sessionError) throw sessionError;
 
-                if (user) {
+                if (session?.user) {
                     // Dev mode bypass
                     if (isDevMode) {
                         console.log('Dev mode active - using mock data');
-                        userEmail.textContent = user.email;
+                        userEmail.textContent = session.user.email;
                         statusMessage.textContent = "Dev Mode Active - Verification Bypassed";
                         statusMessage.classList.add('success');
                         devModeBtn.style.display = 'block';
                         return;
                     }
 
-                    userEmail.textContent = user.email;
+                    userEmail.textContent = session.user.email;
                     // Check verification status every 5 seconds
                     setInterval(checkVerification, 5000);
                 } else if (pendingEmail) {
