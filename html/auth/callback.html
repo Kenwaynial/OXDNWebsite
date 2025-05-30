@@ -7,174 +7,49 @@
     <link rel="icon" type="image/png" href="../../assets/logo.png">
     <link rel="apple-touch-icon" href="../../assets/logo.png">
     <link rel="stylesheet" href="../../css/homepage.css">
+    <link rel="stylesheet" href="../../css/callback.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--background-dark), var(--primary-color));
-            position: relative;
-            overflow: hidden;
-        }
-
-        .auth-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
-            z-index: 1;
-        }
-
-        .auth-form {
-            background: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(138, 43, 226, 0.15);
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid rgba(138, 43, 226, 0.1);
-            position: relative;
-            z-index: 2;
-            backdrop-filter: blur(10px);
-        }
-
-        .auth-form h1 {
-            color: var(--primary-color);
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            font-weight: 600;
-            background: linear-gradient(45deg, #8A2BE2, #9370DB);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .form-description {
-            color: var(--text-color);
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(138, 43, 226, 0.1);
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            margin: 0 auto 2rem;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        #message {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 8px;
-            font-weight: 500;
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-            position: relative;
-            z-index: 2;
-        }
-
-        #message.success {
-            background-color: rgba(138, 43, 226, 0.1);
-            color: var(--primary-color);
-            border: 1px solid rgba(138, 43, 226, 0.2);
-        }
-
-        #message.error {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-            border: 1px solid rgba(220, 53, 69, 0.2);
-        }
-
-        #message.info {
-            background-color: rgba(138, 43, 226, 0.1);
-            color: var(--primary-color);
-            border: 1px solid rgba(138, 43, 226, 0.2);
-        }
-
-        .logo-link {
-            margin-bottom: 2rem;
-            transition: transform 0.3s ease;
-            position: relative;
-            z-index: 2;
-        }
-
-        .logo-link:hover {
-            transform: scale(1.05);
-        }
-
-        .logo {
-            height: 60px;
-            width: auto;
-            filter: drop-shadow(0 0 10px rgba(138, 43, 226, 0.5));
-        }
-
-        .version {
-            position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            color: var(--text-color);
-            opacity: 0.7;
-            font-size: 0.8rem;
-            z-index: 2;
-        }
-
-        .action-button {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 5px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 1rem;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .action-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
-        }
-
-        .action-button.secondary {
-            background: transparent;
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .action-button.secondary:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-    </style>
 </head>
 <body>
+    <div class="particles-container">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
     <main class="auth-container">
         <a href="../homepage.html" class="logo-link">
             <img src="../../assets/logo.png" alt="OXDN Logo" class="logo">
         </a>
 
         <div class="auth-form">
-            <h1>Authentication in Progress</h1>
-            <p class="form-description">Securing your gaming journey...</p>
-            <div class="loading-spinner"></div>
+            <div class="auth-header">
+                <h1>Authentication in Progress</h1>
+                <p class="form-description">Securing your gaming journey...</p>
+            </div>
+
+            <div class="auth-content">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Verifying your credentials...</div>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-step active">
+                        <i class="fas fa-user-check"></i>
+                        <span>Identity Verification</span>
+                    </div>
+                    <div class="status-step">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Security Check</span>
+                    </div>
+                    <div class="status-step">
+                        <i class="fas fa-gamepad"></i>
+                        <span>Gaming Profile</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="message"></div>
@@ -188,6 +63,17 @@
         const message = document.getElementById("message");
         const authForm = document.querySelector('.auth-form');
         const loadingSpinner = document.querySelector('.loading-spinner');
+        const statusSteps = document.querySelectorAll('.status-step');
+
+        function updateStatusStep(step) {
+            statusSteps.forEach((s, index) => {
+                if (index <= step) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        }
 
         function showMessage(text, type, showButtons = false, buttons = []) {
             let buttonsHtml = '';
@@ -198,7 +84,10 @@
             }
             
             message.innerHTML = `
-                <div class="message ${type}">${text}</div>
+                <div class="message ${type}">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                    <span>${text}</span>
+                </div>
                 ${buttonsHtml}
             `;
             message.classList.add(type);
@@ -210,6 +99,7 @@
         // Handle the OAuth callback
         const handleCallback = async () => {
             try {
+                updateStatusStep(0);
                 // First, check if we're in the middle of a Google OAuth flow
                 const hash = window.location.hash;
                 const searchParams = new URLSearchParams(window.location.search);
@@ -224,6 +114,7 @@
                     }
 
                     if (session) {
+                        updateStatusStep(2);
                         showMessage("Authentication successful! Redirecting to dashboard...", "success");
                         setTimeout(() => {
                             window.location.href = "../dashboard.html";
@@ -237,6 +128,7 @@
                 }
 
                 // We're in an OAuth flow, handle it
+                updateStatusStep(1);
                 const { data, error } = await supabase.auth.getSession();
                 
                 if (error) {
@@ -244,32 +136,58 @@
                 }
 
                 if (data?.session) {
-                    // Check if the user has completed their profile
-                    const { data: profile, error: profileError } = await supabase
+                    const userId = data.session.user.id;
+                    const userEmail = data.session.user.email;
+
+                    // First check if user exists in profiles table
+                    const { data: existingUser, error: userCheckError } = await supabase
                         .from('profiles')
-                        .select('username, email')
-                        .eq('id', data.session.user.id)
+                        .select('id, username, email')
+                        .eq('id', userId)
                         .single();
 
-                    if (profileError) {
-                        console.error('Profile check error:', profileError);
-                        throw profileError;
+                    if (userCheckError && userCheckError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+                        console.error('User check error:', userCheckError);
+                        throw userCheckError;
                     }
 
-                    if (!profile || !profile.username) {
-                        // User hasn't completed registration
+                    if (!existingUser) {
+                        // New user - needs to complete registration
                         showMessage(
-                            "Please complete your registration first", 
+                            "Welcome to OXDN! Please complete your registration to continue.", 
                             "info", 
                             true, 
                             [
-                                { text: "Complete Registration", href: "../register.html", class: "primary" },
+                                { 
+                                    text: "Complete Registration", 
+                                    href: `../register.html?email=${encodeURIComponent(userEmail)}&id=${userId}`, 
+                                    class: "primary" 
+                                },
                                 { text: "Back to Login", href: "../login.html", class: "secondary" }
                             ]
                         );
                         return;
                     }
 
+                    // Check if profile is complete
+                    if (!existingUser.username) {
+                        showMessage(
+                            "Please complete your profile to continue", 
+                            "info", 
+                            true, 
+                            [
+                                { 
+                                    text: "Complete Profile", 
+                                    href: `../register.html?email=${encodeURIComponent(userEmail)}&id=${userId}`, 
+                                    class: "primary" 
+                                },
+                                { text: "Back to Login", href: "../login.html", class: "secondary" }
+                            ]
+                        );
+                        return;
+                    }
+
+                    updateStatusStep(2);
                     showMessage("Authentication successful! Redirecting to dashboard...", "success");
                     setTimeout(() => {
                         window.location.href = "../dashboard.html";
