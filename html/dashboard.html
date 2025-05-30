@@ -160,8 +160,8 @@
                 showLoading();
                 
                 // Get current user
-                const user = await getCurrentUser();
-                if (!user) {
+                const { user, error: userError } = await getCurrentUser();
+                if (userError || !user) {
                     throw new Error("No user is currently signed in");
                 }
 
@@ -182,8 +182,8 @@
                 welcomeName.textContent = displayName;
                 userEmail.textContent = user.email || '-';
                 userAvatar.textContent = getInitials(displayName);
-                lastLogin.textContent = formatDate(stats.last_activity);
-                memberSince.textContent = formatDate(profile.created_at);
+                lastLogin.textContent = formatDate(stats?.last_activity);
+                memberSince.textContent = formatDate(profile?.created_at);
                 
                 // Update account status
                 const isActive = true; // We can add more logic here if needed
