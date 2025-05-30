@@ -90,8 +90,7 @@ export const signInWithGoogle = async () => {
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
-        },
-        skipBrowserRedirect: true // This prevents automatic redirect
+        }
       }
     });
 
@@ -102,8 +101,6 @@ export const signInWithGoogle = async () => {
 
     // If we get here, the OAuth flow has started
     if (data?.url) {
-      // Store the provider token in sessionStorage
-      sessionStorage.setItem('provider_token', data.provider_token);
       // Redirect to Google's OAuth page
       window.location.href = data.url;
       return { data, error: null };

@@ -96,16 +96,14 @@
     // Google login
     googleLoginBtn.addEventListener("click", async () => {
       try {
-        message.textContent = "Connecting to Google...";
+        message.textContent = "Redirecting to Google...";
+        message.classList.add("info");
         const { data, error } = await signInWithGoogle();
         
         if (error) throw error;
         
-        message.textContent = "Login successful!";
-        message.classList.add("success");
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 2000);
+        // Don't show success message here since we're redirecting to Google
+        // The callback page will handle the success state
       } catch (error) {
         message.textContent = error.message;
         message.classList.add("error");
@@ -297,6 +295,12 @@
 
     .google-btn {
       animation: gradient 15s ease infinite;
+    }
+
+    #message.info {
+      background-color: rgba(138, 43, 226, 0.1);
+      color: var(--primary-color);
+      border: 1px solid rgba(138, 43, 226, 0.2);
     }
   </style>
 </body>
