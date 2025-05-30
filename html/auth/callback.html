@@ -101,6 +101,12 @@
             border: 1px solid rgba(220, 53, 69, 0.2);
         }
 
+        #message.info {
+            background-color: rgba(138, 43, 226, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(138, 43, 226, 0.2);
+        }
+
         .logo-link {
             margin-bottom: 2rem;
             transition: transform 0.3s ease;
@@ -128,7 +134,7 @@
             z-index: 2;
         }
 
-        .retry-button {
+        .action-button {
             background: var(--primary-color);
             color: white;
             border: none;
@@ -138,11 +144,24 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 1rem;
+            text-decoration: none;
+            display: inline-block;
         }
 
-        .retry-button:hover {
+        .action-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(138, 43, 226, 0.3);
+        }
+
+        .action-button.secondary {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .action-button.secondary:hover {
+            background: var(--primary-color);
+            color: white;
         }
     </style>
 </head>
@@ -170,10 +189,17 @@
         const authForm = document.querySelector('.auth-form');
         const loadingSpinner = document.querySelector('.loading-spinner');
 
-        function showMessage(text, type, showRetry = false) {
+        function showMessage(text, type, showButtons = false, buttons = []) {
+            let buttonsHtml = '';
+            if (showButtons && buttons.length > 0) {
+                buttonsHtml = buttons.map(btn => 
+                    `<a href="${btn.href}" class="action-button ${btn.class || ''}">${btn.text}</a>`
+                ).join('');
+            }
+            
             message.innerHTML = `
                 <div class="message ${type}">${text}</div>
-                ${showRetry ? '<button class="retry-button" onclick="window.location.href=\'../login.html\'">Try Again</button>' : ''}
+                ${buttonsHtml}
             `;
             message.classList.add(type);
             if (type === 'success') {
@@ -203,7 +229,9 @@
                             window.location.href = "../dashboard.html";
                         }, 2000);
                     } else {
-                        showMessage("Please complete the Google sign-in process", "error", true);
+                        showMessage("Please complete the Google sign-in process", "error", true, [
+                            { text: "Try Again", href: "../login.html" }
+                        ]);
                     }
                     return;
                 }
@@ -216,19 +244,30 @@
                 }
 
                 if (data?.session) {
-                    // Check if we have a provider token in session storage
-                    const providerToken = sessionStorage.getItem('provider_token');
-                    
-                    if (providerToken) {
-                        const { error: updateError } = await supabase.auth.updateUser({
-                            data: { provider_token: providerToken }
-                        });
-                        
-                        if (updateError) {
-                            console.error('Provider token update error:', updateError);
-                        }
-                        
-                        sessionStorage.removeItem('provider_token');
+                    // Check if the user has completed their profile
+                    const { data: profile, error: profileError } = await supabase
+                        .from('profiles')
+                        .select('username, email')
+                        .eq('id', data.session.user.id)
+                        .single();
+
+                    if (profileError) {
+                        console.error('Profile check error:', profileError);
+                        throw profileError;
+                    }
+
+                    if (!profile || !profile.username) {
+                        // User hasn't completed registration
+                        showMessage(
+                            "Please complete your registration first", 
+                            "info", 
+                            true, 
+                            [
+                                { text: "Complete Registration", href: "../register.html", class: "primary" },
+                                { text: "Back to Login", href: "../login.html", class: "secondary" }
+                            ]
+                        );
+                        return;
                     }
 
                     showMessage("Authentication successful! Redirecting to dashboard...", "success");
@@ -240,18 +279,26 @@
                     if (searchParams.has('error')) {
                         const error = searchParams.get('error');
                         if (error === 'access_denied') {
-                            showMessage("Google sign-in was cancelled. Please try again.", "error", true);
+                            showMessage("Google sign-in was cancelled. Please try again.", "error", true, [
+                                { text: "Try Again", href: "../login.html" }
+                            ]);
                         } else {
-                            showMessage("Authentication failed. Please try again.", "error", true);
+                            showMessage("Authentication failed. Please try again.", "error", true, [
+                                { text: "Try Again", href: "../login.html" }
+                            ]);
                         }
                     } else {
                         // If we don't have a session but we're in the OAuth flow, we need to wait for the user to select their account
-                        showMessage("Please select your Google account to continue", "error", true);
+                        showMessage("Please select your Google account to continue", "error", true, [
+                            { text: "Try Again", href: "../login.html" }
+                        ]);
                     }
                 }
             } catch (error) {
                 console.error('Auth callback error:', error);
-                showMessage("Authentication failed. Please try again.", "error", true);
+                showMessage("Authentication failed. Please try again.", "error", true, [
+                    { text: "Try Again", href: "../login.html" }
+                ]);
             }
         };
 
