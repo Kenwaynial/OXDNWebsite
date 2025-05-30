@@ -6,6 +6,18 @@ const port = process.env.PORT || 3000;
 // Serve static files from the root directory
 app.use(express.static(__dirname));
 
+// Serve CSS files with proper caching
+app.use('/css', express.static(path.join(__dirname, 'css'), {
+  maxAge: '1y',
+  etag: true
+}));
+
+// Serve assets with proper caching
+app.use('/assets', express.static(path.join(__dirname, 'assets'), {
+  maxAge: '1y',
+  etag: true
+}));
+
 // Serve HTML files from the html directory
 app.get('/*', (req, res) => {
   // If the request is for the root, serve homepage.html
