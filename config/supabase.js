@@ -6,24 +6,32 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Site URL configuration
 const SITE_URL = 'https://oxdn.vercel.app';
 const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
+const RESET_PASSWORD_URL = `${SITE_URL}/html/auth/resetPassword.html`;
+const AUTH_CALLBACK_URL = `${SITE_URL}/auth/callback`;
 
-// Determine if we're in development mode
-const isDevMode = typeof window !== 'undefined' && 
-                 (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-// Create Supabase client with explicit site URL
+// Create Supabase client with explicit site URL and all redirect URLs
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    redirectTo: VERIFY_EMAIL_URL,
     site: SITE_URL,
-    // Add specific configuration for password reset
-    passwordReset: {
-      redirectTo: `${SITE_URL}/html/auth/resetPassword.html`
+    // Configure all redirect URLs
+    redirectTo: AUTH_CALLBACK_URL,
+    // Specific configurations for different auth flows
+    verifyEmail: {
+      redirectTo: VERIFY_EMAIL_URL
     },
+    passwordReset: {
+      redirectTo: RESET_PASSWORD_URL
+    },
+    // Allow multiple redirect URLs
+    allowedRedirectUrls: [
+      VERIFY_EMAIL_URL,
+      RESET_PASSWORD_URL,
+      AUTH_CALLBACK_URL
+    ],
     cookieOptions: {
       domain: '.vercel.app',
       path: '/',
@@ -37,8 +45,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 })
 
-// Export the URLs for use in other files
-export { SITE_URL, VERIFY_EMAIL_URL, isDevMode };
+// Export URLs for use in other files
+export { 
+  SITE_URL, 
+  VERIFY_EMAIL_URL,
+  RESET_PASSWORD_URL,
+  AUTH_CALLBACK_URL
+};
 
 // Auth helpers
 export const signUp = async (email, password) => {
