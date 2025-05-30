@@ -9,7 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    redirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
+    redirectTo: window.location.origin + '/html/verifyEmail.html'
   }
 })
 
