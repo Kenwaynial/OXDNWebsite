@@ -93,14 +93,6 @@
             try {
                 showLoading();
                 
-                // Dev mode bypass
-                if (isDevMode) {
-                    console.log('Dev mode active - bypassing verification');
-                    statusMessage.textContent = "Email verified successfully! (Dev Mode)";
-                    statusMessage.classList.add('success');
-                    return;
-                }
-
                 const { data: { session }, error: sessionError } = await supabase.auth.getSession();
                 
                 if (sessionError) throw sessionError;
@@ -129,28 +121,24 @@
             try {
                 showLoading();
                 
-                // Dev mode bypass
-                if (isDevMode) {
-                    console.log('Dev mode active - bypassing resend');
-                    statusMessage.textContent = "Verification email sent! (Dev Mode)";
-                    statusMessage.classList.remove('success');
-                    return;
-                }
-
                 const pendingEmail = sessionStorage.getItem('pendingVerificationEmail');
                 if (!pendingEmail) {
                     showError('No email address found. Please try logging in again.');
                     return;
                 }
 
-                const result = await resendVerificationEmail(pendingEmail);
-                
-                if (result.success) {
-                    statusMessage.textContent = result.message;
-                    statusMessage.classList.remove('success');
-                } else {
-                    throw new Error(result.message);
-                }
+                const { error } = await supabase.auth.resend({
+                    type: 'signup',
+                    email: pendingEmail,
+                    options: {
+                        emailRedirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
+                    }
+                });
+
+                if (error) throw error;
+
+                statusMessage.textContent = "Verification email sent! Please check your inbox.";
+                statusMessage.classList.remove('success');
             } catch (error) {
                 console.error('Resend verification error:', error);
                 showError('Error sending verification email');
@@ -180,16 +168,6 @@
                 if (sessionError) throw sessionError;
 
                 if (session?.user) {
-                    // Dev mode bypass
-                    if (isDevMode) {
-                        console.log('Dev mode active - using mock data');
-                        userEmail.textContent = session.user.email;
-                        statusMessage.textContent = "Dev Mode Active - Verification Bypassed";
-                        statusMessage.classList.add('success');
-                        devModeBtn.style.display = 'block';
-                        return;
-                    }
-
                     userEmail.textContent = session.user.email;
                     // Check verification status every 5 seconds
                     setInterval(checkVerification, 5000);
@@ -201,16 +179,7 @@
                     // Show help text
                     document.querySelector('.help-text').style.display = 'block';
                 } else {
-                    // If no pending email and not in dev mode, redirect to login
-                    if (!isDevMode) {
-                        window.location.href = 'login.html';
-                    } else {
-                        console.log('Dev mode active - bypassing auth check');
-                        userEmail.textContent = 'dev@example.com';
-                        statusMessage.textContent = "Dev Mode Active - Auth Bypassed";
-                        statusMessage.classList.add('success');
-                        devModeBtn.style.display = 'block';
-                    }
+                    window.location.href = 'login.html';
                 }
             } catch (error) {
                 console.error('Initialization error:', error);
