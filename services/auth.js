@@ -47,7 +47,8 @@ export const registerWithEmail = async (email, password, username) => {
       password,
       options: {
         data: {
-          username: username
+          username: username,
+          display_name: username // Set display name same as username initially
         },
         emailRedirectTo: 'https://oxdn.vercel.app/html/verifyEmail.html'
       }
@@ -68,7 +69,10 @@ export const registerWithEmail = async (email, password, username) => {
       const { error: profileError } = await supabase.rpc('handle_registration', {
         user_id: data.user.id,
         user_email: email,
-        user_metadata: { username }
+        user_metadata: { 
+          username: username,
+          display_name: username
+        }
       })
 
       if (profileError) {
