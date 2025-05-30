@@ -231,13 +231,10 @@ export const registerWithEmail = async (email, password, username) => {
 
 export const resetPassword = async (email) => {
   try {
-    // Set explicit options for password reset
     const options = {
-      redirectTo: 'https://oxdn.vercel.app/html/auth/resetPassword.html',
-      captureTime: true, // Add timestamp to track when reset was requested
+      redirectTo: `${SITE_URL}/html/auth/resetPassword.html`,
       data: {
-        requestTime: new Date().getTime(), // Add timestamp to metadata
-        expiresIn: 300 // 5 minutes in seconds
+        timestamp: new Date().getTime()
       }
     };
 
@@ -251,7 +248,7 @@ export const resetPassword = async (email) => {
     return { 
       data, 
       error: null,
-      message: 'Password reset link sent! Please check your email. Link expires in 5 minutes.' 
+      message: 'Password reset link sent! Please check your email.' 
     };
   } catch (error) {
     console.error('Reset password error:', error);
@@ -263,19 +260,18 @@ export const resetPassword = async (email) => {
   }
 }
 
-// Add a new function to validate reset tokens
 export const validateResetToken = async (token) => {
-    try {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        
-        if (error) throw error;
-
-        return { isValid: true, error: null };
-    } catch (error) {
-        console.error('Token validation error:', error);
-        return { 
-            isValid: false, 
-            error: error.message || 'Invalid or expired reset link.'
-        };
-    }
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error) throw error;
+    
+    return { isValid: true, error: null };
+  } catch (error) {
+    console.error('Token validation error:', error);
+    return { 
+      isValid: false, 
+      error: error.message || 'Invalid or expired reset link.'
+    };
+  }
 }
