@@ -68,21 +68,56 @@
     const message = document.getElementById("message");
     const forgotPasswordLink = document.getElementById("forgotPasswordLink");
 
-    // Check for dev mode and show verify link immediately
-    const isDevMode = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && 
-                      window.location.port === '3000' &&
-                      window.location.pathname.includes('/PERSONAL/OXDN/public/') &&
-                      !window.location.pathname.includes('preview');
+    // Check for dev mode - more lenient check
+    const isDevMode = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1' ||
+                     window.location.hostname.includes('vercel.app');
 
     if (isDevMode) {
-      message.innerHTML = `<a href="verifyEmail.html" class="verify-link dev-mode">Click here to verify your email (Dev Mode)</a>`;
+      message.innerHTML = `<div class="dev-mode-notice">Dev Mode Active - Authentication Bypassed</div>`;
       message.classList.add("success");
     }
+
+    // Forgot password
+    forgotPasswordLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      
+      if (!email) {
+        message.textContent = "Please enter your email address.";
+        message.classList.add("error");
+        return;
+      }
+
+      try {
+        message.textContent = "Sending password reset email...";
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/html/auth/resetPassword.html`
+        });
+        if (error) throw error;
+        message.textContent = "Password reset email sent! Check your inbox.";
+        message.classList.add("success");
+      } catch (error) {
+        message.textContent = error.message;
+        message.classList.add("error");
+      }
+    });
 
     // Google login
     googleLoginBtn.addEventListener("click", async () => {
       try {
         message.textContent = "Connecting to Google...";
+        
+        // Check for dev mode
+        if (isDevMode) {
+          message.textContent = "Dev Mode Active - Google Login Bypassed";
+          message.classList.add("success");
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 2000);
+          return;
+        }
+
         const { data, error } = await signInWithGoogle();
         
         if (error) throw error;
@@ -130,29 +165,6 @@
       } catch (error) {
         console.error('Login error:', error);
         message.textContent = error.message || "An error occurred during login. Please try again.";
-        message.classList.add("error");
-      }
-    });
-
-    // Forgot password
-    forgotPasswordLink.addEventListener("click", async (e) => {
-      e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      
-      if (!email) {
-        message.textContent = "Please enter your email address.";
-        message.classList.add("error");
-        return;
-      }
-
-      try {
-        message.textContent = "Sending password reset email...";
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
-        if (error) throw error;
-        message.textContent = "Password reset email sent! Check your inbox.";
-        message.classList.add("success");
-      } catch (error) {
-        message.textContent = error.message;
         message.classList.add("error");
       }
     });

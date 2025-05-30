@@ -82,13 +82,24 @@ export const resendVerification = async (email) => {
 }
 
 export const signInWithGoogle = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: VERIFY_EMAIL_URL
-    }
-  })
-  return { data, error }
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/html/auth/callback.html`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
+      }
+    });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Google sign-in error:', error);
+    return { data: null, error };
+  }
 }
 
 export const registerWithEmail = async (email, password, username) => {
