@@ -1,4 +1,7 @@
-import { supabase, VERIFY_EMAIL_URL, SITE_URL } from '../config/supabase.js'
+import { supabase, validateResetToken } from '../../services/auth.js';
+
+// Export supabase instance so other files can use it
+export { supabase };
 
 // Simple sign up function
 export const signUp = async (email, password) => {
@@ -254,29 +257,17 @@ export const resetPassword = async (email) => {
 
 // Add a new function to validate reset tokens
 export const validateResetToken = async (token) => {
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error) throw error;
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        
+        if (error) throw error;
 
-    // Check if the token is within the 5-minute window
-    const metadata = user?.user_metadata;
-    if (metadata?.requestTime) {
-      const now = new Date().getTime();
-      const requestTime = parseInt(metadata.requestTime);
-      const timeElapsed = (now - requestTime) / 1000; // Convert to seconds
-
-      if (timeElapsed > 300) { // 5 minutes
-        throw new Error('Reset link has expired. Please request a new one.');
-      }
+        return { isValid: true, error: null };
+    } catch (error) {
+        console.error('Token validation error:', error);
+        return { 
+            isValid: false, 
+            error: error.message || 'Invalid or expired reset link.'
+        };
     }
-
-    return { isValid: true, error: null };
-  } catch (error) {
-    console.error('Token validation error:', error);
-    return { 
-      isValid: false, 
-      error: error.message || 'Invalid or expired reset link.'
-    };
-  }
 }
