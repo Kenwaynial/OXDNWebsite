@@ -57,7 +57,20 @@
     <div id="error" class="error"></div>
 
     <script type="module">
-        import { supabase } from '../config/supabase.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/+esm'
+
+        const supabaseUrl = 'https://qjqjqjqjqjqjqjqjqjqj.supabase.co'
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqcWpxanFqcWpxanFqcWpxanFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTA5MjQ5NzAsImV4cCI6MjAyNjUwMDk3MH0.qjqjqjqjqjqjqjqjqjqjqjqjqjqjqjqjqjqjqjqjqj'
+
+        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true,
+                flowType: 'pkce',
+                redirectTo: window.location.origin + '/html/verifyEmail.html'
+            }
+        })
 
         // Check if we're in development mode
         const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
