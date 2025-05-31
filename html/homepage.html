@@ -28,15 +28,49 @@
 
   <main>
     <section class="hero">
+      <div class="slideshow-container">
+        <div class="slide active" style="background-image: url('../assets/games/valorantBg.jpg')">
+          <div class="slide-content">
+            <h2>Tactical Precision</h2>
+            <p>Master your abilities in Valorant</p>
+          </div>
+        </div>
+        <div class="slide" style="background-image: url('../assets/games/lolBg.jpg')">
+          <div class="slide-content">
+            <h2>Epic Battles</h2>
+            <p>Dominate the Rift in League</p>
+          </div>
+        </div>
+        <div class="slide" style="background-image: url('../assets/games/dota2Bg.jpg')">
+          <div class="slide-content">
+            <h2>Strategic Warfare</h2>
+            <p>Conquer the Ancient in Dota 2</p>
+          </div>
+        </div>
+        <div class="slide" style="background-image: url('../assets/games/minecraftBg.jpg')">
+          <div class="slide-content">
+            <h2>Creative Freedom</h2>
+            <p>Build your world in Minecraft</p>
+          </div>
+        </div>
+        <div class="slide-overlay"></div>
+      </div>
+
       <div class="hero-content">
-        <h1>Level Up Your Gaming</h1>
-        <p>Where every game is an adventure and every player is family</p>
+        <h1 class="glow-text">Level Up Your Gaming</h1>
+        <p class="hero-subtitle">Where every game is an adventure and every player is family</p>
         <div class="cta-buttons">
           <a href="register.html" class="cta-button primary">Join the Squad</a>
           <a href="#features" class="cta-button secondary">Discover More</a>
         </div>
       </div>
-      <div class="hero-overlay"></div>
+
+      <div class="slide-indicators">
+        <button class="indicator active" data-slide="0"></button>
+        <button class="indicator" data-slide="1"></button>
+        <button class="indicator" data-slide="2"></button>
+        <button class="indicator" data-slide="3"></button>
+      </div>
     </section>
 
     <section id="features" class="features">
@@ -143,7 +177,7 @@
   </footer>
 
   <!-- Simple Version Display -->
-  <div class="version">v1.0.1</div>
+  <div class="version">v1.0.2</div>
 
   <script type="module">
     import { supabase } from '../config/supabase.js';
@@ -159,6 +193,95 @@
       // User is signed out
       console.log("User is signed out");
     }
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const slides = document.querySelectorAll('.slide');
+      const indicators = document.querySelectorAll('.indicator');
+      let currentSlide = 0;
+      const slideInterval = 5000; // 5 seconds
+
+      function updateSlides(newIndex) {
+        // Remove all classes first
+        slides.forEach(slide => {
+          slide.classList.remove('active', 'prev');
+        });
+        indicators.forEach(indicator => {
+          indicator.classList.remove('active');
+        });
+
+        // Add appropriate classes
+        slides[currentSlide].classList.add('prev');
+        currentSlide = newIndex;
+        slides[currentSlide].classList.add('active');
+        indicators[currentSlide].classList.add('active');
+
+        // Reset and restart the progress indicator
+        indicators[currentSlide].querySelector('::after').style.transition = 'none';
+        indicators[currentSlide].querySelector('::after').style.transform = 'translateX(-100%)';
+        setTimeout(() => {
+          indicators[currentSlide].querySelector('::after').style.transition = 'transform 5s linear';
+          indicators[currentSlide].querySelector('::after').style.transform = 'translateX(0)';
+        }, 50);
+      }
+
+      function nextSlide() {
+        const newIndex = (currentSlide + 1) % slides.length;
+        updateSlides(newIndex);
+      }
+
+      function prevSlide() {
+        const newIndex = (currentSlide - 1 + slides.length) % slides.length;
+        updateSlides(newIndex);
+      }
+
+      // Start the slideshow
+      let slideTimer = setInterval(nextSlide, slideInterval);
+
+      // Handle manual navigation
+      indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+          clearInterval(slideTimer);
+          updateSlides(index);
+          slideTimer = setInterval(nextSlide, slideInterval);
+        });
+      });
+
+      // Add keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+          clearInterval(slideTimer);
+          prevSlide();
+          slideTimer = setInterval(nextSlide, slideInterval);
+        } else if (e.key === 'ArrowRight') {
+          clearInterval(slideTimer);
+          nextSlide();
+          slideTimer = setInterval(nextSlide, slideInterval);
+        }
+      });
+
+      // Add touch navigation
+      let touchStartX = 0;
+      document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+      });
+
+      document.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > 50) { // Minimum swipe distance
+          clearInterval(slideTimer);
+          if (diff > 0) {
+            nextSlide();
+          } else {
+            prevSlide();
+          }
+          slideTimer = setInterval(nextSlide, slideInterval);
+        }
+      });
+    });
   </script>
 
   <style>
