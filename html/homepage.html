@@ -213,19 +213,26 @@
       const slideInterval = 5000; // 5 seconds
 
       function updateSlides(newIndex) {
+        if (!slides.length || !indicators.length) return; // Guard against empty NodeLists
+        
         // Remove all classes first
         slides.forEach(slide => {
-          slide.classList.remove('active', 'prev');
+          if (slide) slide.classList.remove('active', 'prev');
         });
         indicators.forEach(indicator => {
-          indicator.classList.remove('active');
+          if (indicator) indicator.classList.remove('active');
         });
 
         // Add appropriate classes
-        slides[currentSlide].classList.add('prev');
+        const prevSlide = slides[currentSlide];
+        if (prevSlide) prevSlide.classList.add('prev');
+        
         currentSlide = newIndex;
-        slides[currentSlide].classList.add('active');
-        indicators[currentSlide].classList.add('active');
+        const activeSlide = slides[currentSlide];
+        const activeIndicator = indicators[currentSlide];
+        
+        if (activeSlide) activeSlide.classList.add('active');
+        if (activeIndicator) activeIndicator.classList.add('active');
       }
 
       function nextSlide() {
