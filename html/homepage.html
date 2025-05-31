@@ -206,6 +206,16 @@
   </script>
 
   <script>
+    // Add smooth scroll for Discover More button
+    document.querySelector('a[href="#features"]').addEventListener('click', function(e) {
+      e.preventDefault();
+      const featuresSection = document.querySelector('#features');
+      featuresSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       const slides = document.querySelectorAll('.slide');
       const indicators = document.querySelectorAll('.indicator');
