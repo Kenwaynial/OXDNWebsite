@@ -29,25 +29,25 @@
   <main>
     <section class="hero">
       <div class="slideshow-container">
-        <div class="slide active" style="background-image: url('../assets/games/valorantBg.jpg')">
+        <div class="slide active" style="background-image: url('../assets/games/backgrounds/valorantBg.jpg')">
           <div class="slide-content">
             <h2>Tactical Precision</h2>
             <p>Master your abilities in Valorant</p>
           </div>
         </div>
-        <div class="slide" style="background-image: url('../assets/games/lolBg.jpg')">
+        <div class="slide" style="background-image: url('../assets/games/backgrounds/lolBg.jpg')">
           <div class="slide-content">
             <h2>Epic Battles</h2>
             <p>Dominate the Rift in League</p>
           </div>
         </div>
-        <div class="slide" style="background-image: url('../assets/games/dota2Bg.jpg')">
+        <div class="slide" style="background-image: url('../assets/games/backgrounds/dota2Bg.jpg')">
           <div class="slide-content">
             <h2>Strategic Warfare</h2>
             <p>Conquer the Ancient in Dota 2</p>
           </div>
         </div>
-        <div class="slide" style="background-image: url('../assets/games/minecraftBg.jpg')">
+        <div class="slide" style="background-image: url('../assets/games/backgrounds/minecraftBg.png')">
           <div class="slide-content">
             <h2>Creative Freedom</h2>
             <p>Build your world in Minecraft</p>
@@ -58,10 +58,20 @@
 
       <div class="hero-content">
         <h1 class="glow-text">Level Up Your Gaming</h1>
-        <p class="hero-subtitle">Where every game is an adventure and every player is family</p>
+        <p class="hero-subtitle">Join our vibrant gaming community where passion meets play. Experience gaming like never before!</p>
         <div class="cta-buttons">
-          <a href="register.html" class="cta-button primary">Join the Squad</a>
-          <a href="#features" class="cta-button secondary">Discover More</a>
+          <a href="register.html" class="cta-button primary">
+            <span class="button-content">
+              <i class="fas fa-gamepad"></i>
+              <span>Join the Squad</span>
+            </span>
+          </a>
+          <a href="#features" class="cta-button secondary">
+            <span class="button-content">
+              <i class="fas fa-chevron-down"></i>
+              <span>Discover More</span>
+            </span>
+          </a>
         </div>
       </div>
 
@@ -216,14 +226,6 @@
         currentSlide = newIndex;
         slides[currentSlide].classList.add('active');
         indicators[currentSlide].classList.add('active');
-
-        // Reset and restart the progress indicator
-        indicators[currentSlide].querySelector('::after').style.transition = 'none';
-        indicators[currentSlide].querySelector('::after').style.transform = 'translateX(-100%)';
-        setTimeout(() => {
-          indicators[currentSlide].querySelector('::after').style.transition = 'transform 5s linear';
-          indicators[currentSlide].querySelector('::after').style.transform = 'translateX(0)';
-        }, 50);
       }
 
       function nextSlide() {
