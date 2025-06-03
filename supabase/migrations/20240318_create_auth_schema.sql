@@ -11,7 +11,7 @@ drop function if exists public.initialize_user_profile();
 create schema if not exists profile_manager;
 
 -- Create username check function
-create or replace function profile_manager.check_username_availability(username text)
+create or replace function public.check_username_availability(username text)
 returns boolean as $$
 begin
   return not exists (
@@ -123,6 +123,21 @@ begin
 end;
 $$ language plpgsql security definer;
 
+-- Fix RPC function schema and grants
+drop function if exists profile_manager.check_username_availability(text);
+create or replace function public.check_username_availability(username text)
+returns boolean as $$
+begin
+  return not exists (
+    select 1 from public.profiles
+    where lower(profiles.username) = lower(username)
+  );
+end;
+$$ language plpgsql security definer;
+
+-- Update grants
+grant execute on function public.check_username_availability(text) to anon, authenticated;
+
 -- Add row level security
 alter table public.profiles enable row level security;
 
@@ -138,4 +153,4 @@ create policy "Users can update their own profile"
 -- Grant permissions
 grant usage on schema profile_manager to anon, authenticated;
 grant execute on function profile_manager.validate_registration to anon;
-grant execute on function profile_manager.check_username_availability to anon;
+grant execute on function public.check_username_availability to anon, authenticated;

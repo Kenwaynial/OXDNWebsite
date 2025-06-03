@@ -78,14 +78,18 @@ const validatePassword = (password) => {
  */
 export const checkUsernameAvailability = async (username) => {
     try {
-        const { data, error } = await supabase
-            .rpc('check_username_availability', { username });
+        // Direct database query instead of RPC
+        const { data: existingUsers, error } = await supabase
+            .from('profiles')
+            .select('username')
+            .ilike('username', username)
+            .limit(1);
 
         if (error) throw error;
 
         return {
-            isAvailable: data,
-            message: data ? 'Username is available' : 'Username is already taken'
+            isAvailable: !existingUsers?.length,
+            message: existingUsers?.length ? 'Username is already taken' : 'Username is available'
         };
     } catch (error) {
         console.error('Username check error:', error);
