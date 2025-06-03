@@ -47,17 +47,15 @@ export const signUp = async (email, password, username) => {
 
     if (existingUsers && existingUsers.length > 0) {
       return { data: null, error: 'Username already taken' };
-    }
-
-    // Proceed with signup
+    }    // Proceed with signup
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           username: username,
-          avatar_url: null,  // Add default values
-          role: 'user'       // Add default role
+          email: email,      // Add email to metadata
+          role: 'user'       // Default role
         },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
@@ -66,27 +64,6 @@ export const signUp = async (email, password, username) => {
     if (signUpError) {
       console.error('Auth signup error:', signUpError);
       return { data: null, error: signUpError };
-    }
-
-    // Create the profile record explicitly
-    if (authData?.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            username: username,
-            avatar_url: null,
-            role: 'user',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ]);
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        return { data: null, error: 'Failed to create user profile' };
-      }
     }
     
     return { data: authData, error: null };
