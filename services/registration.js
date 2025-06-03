@@ -140,7 +140,7 @@ export const registerUser = async ({ email, password, username }) => {
     try {
         console.log('Starting registration process for:', { email, username });
         
-        // Local validations first
+        // Local validations
         const usernameCheck = validateUsername(username);
         const emailCheck = validateEmail(email);
         const passwordCheck = validatePassword(password);
@@ -149,7 +149,7 @@ export const registerUser = async ({ email, password, username }) => {
         if (!emailCheck.isValid) return { success: false, message: emailCheck.message };
         if (!passwordCheck.isValid) return { success: false, message: passwordCheck.message };
 
-        // Check availability
+        // Check username availability one last time
         const { isAvailable, message: availabilityMessage } = await checkUsernameAvailability(username);
         if (!isAvailable) {
             return { success: false, message: availabilityMessage };
@@ -157,15 +157,11 @@ export const registerUser = async ({ email, password, username }) => {
 
         console.log('All validations passed, creating user...');
 
-        // Sign up with metadata in the correct format
+        // Create auth user with minimal metadata
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: {
-                    username,
-                    email_verified: false
-                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
@@ -187,8 +183,27 @@ export const registerUser = async ({ email, password, username }) => {
             throw new Error('No user ID returned from signup');
         }
 
-        // Let the trigger handle profile creation
-        console.log('User created successfully:', {
+        // Create profile separately
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+                id: data.user.id,
+                username,
+                email,
+                created_at: new Date().toISOString()
+            }]);
+
+        if (profileError) {
+            console.error('Profile creation error:', profileError);
+            // Try to cleanup auth user
+            await supabase.auth.admin.deleteUser(data.user.id);
+            return {
+                success: false,
+                message: 'Failed to create user profile. Please try again.'
+            };
+        }
+
+        console.log('User registered successfully:', {
             userId: data.user.id,
             username
         });
@@ -200,7 +215,13 @@ export const registerUser = async ({ email, password, username }) => {
             message: 'Registration successful! Please check your email.'
         };
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('Registration error:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            details: error.details
+        });
+
         return {
             success: false,
             message: 'Registration failed. Please try again later.',
