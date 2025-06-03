@@ -68,9 +68,13 @@
     <p id="message"></p>
   </main>
   <script type="module">
-    import { signUp } from '../services/auth.js';
-    import { supabase } from '../config/supabase.js';
+    import { 
+      registerUser, 
+      checkUsernameAvailability, 
+      checkEmailAvailability 
+    } from '../services/registration.js';
 
+    // Get DOM elements
     const registerForm = document.getElementById("registerForm");
     const message = document.getElementById("message");
     const submitBtn = document.getElementById("submitBtn");
@@ -84,20 +88,11 @@
     const numberCheck = document.getElementById("numberCheck");
     const specialCheck = document.getElementById("specialCheck");
 
-    // Validation functions
-    const validateUsername = (username) => {
-      return username.length >= 3 && /^[a-zA-Z0-9_]+$/.test(username);
-    };
-
-    const validateEmail = (email) => {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
-    };
-
-    const validatePassword = (password) => {
-      const hasLength = password.length >= 6;
-      const hasNumber = /\d/.test(password);
-      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    // Password validation UI
+    passwordInput.addEventListener('input', () => {
+      const hasLength = passwordInput.value.length >= 6;
+      const hasNumber = /\d/.test(passwordInput.value);
+      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(passwordInput.value);
 
       lengthCheck.classList.toggle('valid', hasLength);
       lengthCheck.classList.toggle('invalid', !hasLength);
@@ -105,15 +100,9 @@
       numberCheck.classList.toggle('invalid', !hasNumber);
       specialCheck.classList.toggle('valid', hasSpecial);
       specialCheck.classList.toggle('invalid', !hasSpecial);
-
-      return hasLength && hasNumber && hasSpecial;
-    };
-
-    // Real-time password validation
-    passwordInput.addEventListener('input', () => {
-      validatePassword(passwordInput.value);
     });
 
+    // Form submission
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       message.textContent = "";
@@ -123,31 +112,18 @@
       const email = emailInput.value.trim();
       const password = passwordInput.value;
 
-      // Validate all fields
-      const isUsernameValid = validateUsername(username);
-      const isEmailValid = validateEmail(email);
-      const isPasswordValid = validatePassword(password);
-
-      if (!isUsernameValid || !isEmailValid || !isPasswordValid) {
-        message.textContent = "Please fix the errors in the form.";
-        message.classList.add("error");
-        return;
-      }
-
       try {
         submitBtn.disabled = true;
         message.textContent = "Creating your account...";
-        const result = await signUp(email, password, username);
+
+        const result = await registerUser({ email, password, username });
         
         if (result.success) {
-          // Show success message with loading spinner
-          message.innerHTML = `Please check your email for a verification link<br>
-            <div class="loading-spinner"></div>`;
+          message.innerHTML = `${result.message}<br><div class="loading-spinner"></div>`;
           message.classList.add("success");
           registerForm.reset();
           submitBtn.style.display = 'none';
 
-          // Redirect after 2 seconds
           setTimeout(() => {
             window.location.href = "verifyEmail.html";
           }, 2000);
@@ -164,48 +140,30 @@
       }
     });
 
-    // Add real-time validation for username
+    // Real-time username validation
     usernameInput.addEventListener('input', async () => {
       const username = usernameInput.value.trim();
-      const isValid = validateUsername(username);
-      
-      usernameInput.parentElement.classList.toggle('error', !isValid);
-      usernameError.textContent = isValid ? '' : 'Username must be at least 3 characters and contain only letters, numbers, and underscores';
-      
-      // Check if username is taken
-      if (isValid && username.length >= 3) {
-        try {
-          const { data: existingUsers, error } = await supabase
-            .from('profiles')
-            .select('username')
-            .ilike('username', username)
-            .limit(1);
-            
-          if (error) {
-            console.error('Username check error:', error);
-            return;
-          }
-            
-          if (existingUsers && existingUsers.length > 0) {
-            usernameInput.parentElement.classList.add('error');
-            usernameError.textContent = 'This username is already taken';
-          }
-        } catch (error) {
-          console.error('Username check error:', error);
-        }
+      if (username.length >= 3) {
+        const result = await checkUsernameAvailability(username);
+        usernameInput.parentElement.classList.toggle('error', !result.isAvailable);
+        usernameError.textContent = result.message;
+      } else {
+        usernameInput.parentElement.classList.remove('error');
+        usernameError.textContent = '';
       }
     });
 
-    // Add real-time validation for email
+    // Real-time email validation
     emailInput.addEventListener('input', async () => {
       const email = emailInput.value.trim();
-      const isValid = validateEmail(email);
-      
-      emailInput.parentElement.classList.toggle('error', !isValid);
-      emailError.textContent = isValid ? '' : 'Please enter a valid email address';
-        // Clear any previous error
-      emailInput.parentElement.classList.toggle('error', !isValid);
-      emailError.textContent = isValid ? '' : 'Please enter a valid email address';
+      if (email && email.includes('@')) {
+        const result = await checkEmailAvailability(email);
+        emailInput.parentElement.classList.toggle('error', !result.isAvailable);
+        emailError.textContent = result.message;
+      } else {
+        emailInput.parentElement.classList.remove('error');
+        emailError.textContent = '';
+      }
     });
   </script>
 
