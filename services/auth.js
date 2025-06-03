@@ -36,37 +36,76 @@ export const signUp = async (email, password, username) => {
       };
     }
 
-    // Proceed with signup
-    const { data, error } = await supabase.auth.signUp({
+    // First create the auth user
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          username: username, // Will be used by the trigger
-          email: email,      // Required by profiles table
-          avatar_url: null,  // Optional but included in schema
-          role: 'user'       // Default role
-        },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
 
-    if (error) {
-      console.error('Signup error details:', error);
-      if (error.message.includes('already registered')) {
-        return {
-          data: null,
-          error: { message: 'Email is already registered' }
-        };
-      }
-      throw error;
+    if (signUpError) {
+      console.error('Auth signup error:', signUpError);
+      return { 
+        data: null, 
+        error: signUpError 
+      };
     }
 
-    // Wait a short moment to allow the trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    if (!authData.user) {
+      return {
+        data: null,
+        error: { message: 'Failed to create user account' }
+      };
+    }
+
+    // Now manually create the profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert([
+        {
+          id: authData.user.id,
+          username: username,
+          email: email,
+          avatar_url: null,
+          role: 'user',
+          email_verified: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
+
+    if (profileError) {
+      console.error('Profile creation error:', profileError);
+      // Try to delete the auth user if profile creation fails
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      return {
+        data: null,
+        error: { message: 'Failed to create user profile' }
+      };
+    }
+
+    // Create user activity record
+    const { error: activityError } = await supabase
+      .from('user_activity')
+      .insert([
+        {
+          user_id: authData.user.id,
+          status: 'offline',
+          total_logins: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ]);
+
+    if (activityError) {
+      console.error('Activity record creation error:', activityError);
+      // Don't fail the signup for activity error
+    }
+
     return { 
-      data, 
+      data: authData, 
       error: null 
     };
   } catch (error) {
