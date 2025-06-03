@@ -56,12 +56,25 @@ CREATE TRIGGER set_user_activity_updated_at
 -- Create function to handle new user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    _username TEXT;
 BEGIN
+    -- Get username from metadata or generate from email
+    _username := COALESCE(
+        NEW.raw_user_meta_data->>'username',
+        REGEXP_REPLACE(split_part(NEW.email, '@', 1), '[^a-zA-Z0-9_]', '', 'g')
+    );
+
+    -- Check if username exists
+    IF EXISTS (SELECT 1 FROM public.profiles WHERE username = _username) THEN
+        RAISE EXCEPTION 'Username % is already taken', _username;
+    END IF;
+
     -- Create profile
     INSERT INTO public.profiles (id, username, email)
     VALUES (
         NEW.id,
-        COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+        _username,
         NEW.email
     );
 
@@ -70,6 +83,11 @@ BEGIN
     VALUES (NEW.id, 'offline', 0);
 
     RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Log the error (you can see this in Supabase logs)
+        RAISE LOG 'Error in handle_new_user: %', SQLERRM;
+        RETURN NULL; -- Prevents the user creation
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -134,6 +152,12 @@ CREATE POLICY "Users can update own activity"
 CREATE POLICY "Allow trigger to insert user activity"
     ON public.user_activity FOR INSERT
     WITH CHECK (true);
+
+-- Ensure the trigger has proper permissions
+GRANT ALL ON public.profiles TO authenticated;
+GRANT ALL ON public.profiles TO service_role;
+GRANT ALL ON public.user_activity TO authenticated;
+GRANT ALL ON public.user_activity TO service_role;
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON public.profiles(username);

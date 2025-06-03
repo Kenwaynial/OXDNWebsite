@@ -31,16 +31,19 @@ export {
 };
 
 // Auth helpers
-export const signUp = async (email, password, username) => {
-  try {
+export const signUp = async (email, password, username) => {  try {
     // First check if username already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
       .select('username')
-      .eq('username', username)
-      .single();
+      .eq('username', username);
 
-    if (existingUser) {
+    if (checkError) {
+      console.error('Username check error:', checkError);
+      throw new Error('Error checking username availability');
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
       throw new Error('Username already taken');
     }
 
