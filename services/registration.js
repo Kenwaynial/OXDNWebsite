@@ -138,38 +138,77 @@ export const checkEmailAvailability = async (email) => {
  */
 export const registerUser = async ({ email, password, username }) => {
     try {
-        // Basic validation
-        if (!username || username.length < 3) {
-            return { success: false, message: 'Username must be at least 3 characters' };
-        }
-        if (!email || !email.includes('@')) {
-            return { success: false, message: 'Invalid email address' };
-        }
-        if (!password || password.length < 6) {
-            return { success: false, message: 'Password must be at least 6 characters' };
+        console.log('Starting registration process for:', { email, username });
+        
+        // Local validations first
+        const usernameCheck = validateUsername(username);
+        const emailCheck = validateEmail(email);
+        const passwordCheck = validatePassword(password);
+
+        if (!usernameCheck.isValid) return { success: false, message: usernameCheck.message };
+        if (!emailCheck.isValid) return { success: false, message: emailCheck.message };
+        if (!passwordCheck.isValid) return { success: false, message: passwordCheck.message };
+
+        // Check availability
+        const { isAvailable, message: availabilityMessage } = await checkUsernameAvailability(username);
+        if (!isAvailable) {
+            return { success: false, message: availabilityMessage };
         }
 
-        // Create user
-        const { data, error } = await supabase.auth.signUp({
+        console.log('All validations passed, creating user...');
+
+        // Sign up with metadata in the correct format
+        const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { username },
+                data: {
+                    username,
+                    email_verified: false
+                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
-        if (error) throw error;
+        if (signUpError) {
+            console.error('Auth signup error:', {
+                code: signUpError.code,
+                message: signUpError.message,
+                details: signUpError.details
+            });
+            return { 
+                success: false, 
+                message: 'Account creation failed. Please try again.',
+                error: signUpError
+            };
+        }
 
+        if (!data?.user?.id) {
+            throw new Error('No user ID returned from signup');
+        }
+
+        // Let the trigger handle profile creation
+        console.log('User created successfully:', {
+            userId: data.user.id,
+            username
+        });
+
+        sessionStorage.setItem('pendingVerificationEmail', email);
         return {
             success: true,
-            message: 'Check your email to verify your account'
+            data,
+            message: 'Registration successful! Please check your email.'
         };
     } catch (error) {
         console.error('Registration error:', error);
         return {
             success: false,
-            message: error.message || 'Registration failed'
+            message: 'Registration failed. Please try again later.',
+            error: {
+                code: error.code,
+                message: error.message,
+                details: error.details
+            }
         };
     }
 };
