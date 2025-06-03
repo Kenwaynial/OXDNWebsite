@@ -1,121 +1,4 @@
-import { supabase } from '../config/supabase.js';
-
-// Constants
-const SITE_URL = 'https://oxdn.vercel.app';
-const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
-
-// Export all needed items in one place
-export { 
-    supabase,
-    SITE_URL, 
-    VERIFY_EMAIL_URL 
-};
-
-// Simple sign up function
-export const signUp = async (email, password, username) => {
-  try {
-    // First check if the username is already taken using case-insensitive search
-    const { data: existingUsername, error: usernameError } = await supabase
-      .from('profiles')
-      .select('username')
-      .ilike('username', username)
-      .limit(1);
-
-    if (usernameError) {
-      console.error('Username check error:', usernameError);
-      return {
-        data: null,
-        error: { message: 'Error checking username availability' }
-      };
-    }
-
-    if (existingUsername && existingUsername.length > 0) {
-      return {
-        data: null,
-        error: { message: 'Username is already taken' }
-      };
-    }
-
-    // First create the auth user
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: VERIFY_EMAIL_URL
-      }
-    });
-
-    if (signUpError) {
-      console.error('Auth signup error:', signUpError);
-      return { 
-        data: null, 
-        error: signUpError 
-      };
-    }
-
-    if (!authData.user) {
-      return {
-        data: null,
-        error: { message: 'Failed to create user account' }
-      };
-    }
-
-    // Now manually create the profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert([
-        {
-          id: authData.user.id,
-          username: username,
-          email: email,
-          avatar_url: null,
-          role: 'user',
-          email_verified: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ]);
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError);
-      // Try to delete the auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authData.user.id);
-      return {
-        data: null,
-        error: { message: 'Failed to create user profile' }
-      };
-    }
-
-    // Create user activity record
-    const { error: activityError } = await supabase
-      .from('user_activity')
-      .insert([
-        {
-          user_id: authData.user.id,
-          status: 'offline',
-          total_logins: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ]);
-
-    if (activityError) {
-      console.error('Activity record creation error:', activityError);
-      // Don't fail the signup for activity error
-    }
-
-    return { 
-      data: authData, 
-      error: null 
-    };
-  } catch (error) {
-    console.error('Signup error:', error);
-    return { 
-      data: null, 
-      error: { message: error.message || 'Failed to create account' }
-    };
-  }
-}
+import { supabase, VERIFY_EMAIL_URL } from '../config/supabase.js';
 
 // Simple sign in function
 export const signIn = async (email, password) => {
@@ -160,205 +43,80 @@ export const getCurrentUser = async () => {
   }
 }
 
-// Resend verification email
-export const resendVerification = async (email) => {
-  try {
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-      options: {
-        emailRedirectTo: VERIFY_EMAIL_URL,
-        data: {
-          site_url: SITE_URL
-        }
-      }
-    })
-    
-    if (error) throw error
-    return { error: null }
-  } catch (error) {
-    return { error }
-  }
-}
+/**
+ * Session management functions
+ * These functions deal with active sessions and user state,
+ * not user registration, so they stay in auth.js
+ */
 
-export const signInWithGoogle = async () => {
+export const signUp = async (email, password, username) => {
   try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${SITE_URL}/html/auth/callback.html`,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent'
-        }
-      }
-    });    // Note: The actual activity update happens in the callback page
-    // when the user arrives after successful OAuth authentication
-
-    if (error) {
-      console.error('Google sign-in error:', error);
-      throw error;
+    // Validate username and email format according to schema constraints
+    if (!username || username.length < 3 || username.length > 30) {
+      return { 
+        success: false, 
+        message: 'Username must be between 3 and 30 characters' 
+      };
     }
 
-    // If we get here, the OAuth flow has started
-    if (data?.url) {
-      // Store the timestamp for the callback page to use
-      sessionStorage.setItem('oauth_start_time', Date.now().toString());
-      
-      // Redirect to Google's OAuth page
-      window.location.href = data.url;
-      return { data, error: null };
-    } else {
-      throw new Error('Failed to start Google sign-in process');
+    if (!email.match(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/)) {
+      return {
+        success: false,
+        message: 'Invalid email format'
+      };
     }
-  } catch (error) {
-    console.error('Google sign-in error:', error);
-    return { data: null, error };
-  }
-}
 
-export const registerWithEmail = async (email, password, username) => {
-  try {
-    console.log('Starting registration process for:', { email, username });    // First check if email already exists
+    // Check both username and email availability using proper SQL syntax
     const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
-      .select('email, id')
-      .eq('email', email)
+      .select('username, email')
+      .or(`username.eq.${username},email.eq.${email}`)
+      .limit(1);
 
-    if (checkError) {
-      console.error('Email check error:', checkError)
-      if (checkError.code === 'PGRST116') {
-        // No profile exists yet, which is fine for a new registration
-      } else {
-        return {
-          success: false,
-          message: 'Error checking email availability. Please try again.'
-        }
+    if (checkError) throw checkError;
+
+    if (existingUsers?.length > 0) {
+      const existing = existingUsers[0];
+      if (existing.username === username) {
+        return { success: false, message: 'Username is already taken' };
+      }
+      if (existing.email === email) {
+        return { success: false, message: 'Email is already registered' };
       }
     }
 
-    if (existingUsers && existingUsers.length > 0) {
-      console.log('Email already exists:', email);
-      return {
-        success: false,
-        message: 'This email is already registered. Please use a different email or try logging in.'
-      }
-    }
-
-    // Check if username is already taken
-    const { data: existingUsernames, error: usernameError } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('username', username)
-
-    if (usernameError) {
-      console.error('Username check error:', usernameError)
-      return {
-        success: false,
-        message: 'Error checking username availability. Please try again.'
-      }
-    }
-
-    if (existingUsernames && existingUsernames.length > 0) {
-      console.log('Username already taken:', username);
-      return {
-        success: false,
-        message: 'This username is already taken. Please choose a different username.'
-      }
-    }
-
-    console.log('Email and username available, proceeding with signup');
-
-    // Store email in sessionStorage for verification page
-    sessionStorage.setItem('pendingVerificationEmail', email)
-
-    // Sign up the user
-    const { data, error } = await supabase.auth.signUp({
+    // Proceed with signup - auth.users will be created first
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          username: username,
-          site_url: SITE_URL
+          username,
+          email,
+          role: 'user',
+          email_verified: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
-    })
-
-    if (error) {
-      console.error('Signup error:', error);
-      if (error.message.includes('For security purposes')) {
-        return {
-          success: false,
-          message: 'Please wait a moment before trying again.'
-        }
-      }
-      if (error.message.includes('already registered')) {
-        return {
-          success: false,
-          message: 'This email is already registered. Please use a different email or try logging in.'
-        }
-      }
-      if (error.message.includes('Database error')) {
-        console.error('Database error details:', error);
-        return {
-          success: false,
-          message: 'Error creating account. Please try again or contact support.'
-        }
-      }
-      throw error
-    }
-
-    console.log('User created successfully');
-
-    return {
-      success: true,
-      message: 'Registration successful! Please check your email to verify your account.'
-    }
-  } catch (error) {
-    console.error('Registration error:', error)
-    return {
-      success: false,
-      message: error.message || 'An error occurred during registration. Please try again.'
-    }
-  }
-}
-
-export const resetPassword = async (email) => {
-  try {
-    const timestamp = Date.now();
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${SITE_URL}/html/auth/resetPassword.html?t=${timestamp}`
     });
 
-    if (error) throw error;
+    if (signUpError) throw signUpError;
+
+    // Store email for verification page
+    sessionStorage.setItem('pendingVerificationEmail', email);
 
     return { 
-      data, 
-      error: null,
-      message: 'Password reset link sent! Link expires in 5 minutes.' 
+      success: true,
+      data,
+      message: 'Registration successful! Please check your email to verify your account.'
     };
   } catch (error) {
-    return { 
-      data: null, 
-      error,
-      message: error.message || 'Failed to send reset link' 
+    console.error('Registration error:', error);
+    return {
+      success: false,
+      message: error.message || 'An error occurred during registration'
     };
   }
-}
-
-export const validateResetToken = async (token) => {
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    
-    if (error) throw error;
-    
-    return { isValid: true, error: null };
-  } catch (error) {
-    console.error('Token validation error:', error);
-    return { 
-      isValid: false, 
-      error: error.message || 'Invalid or expired reset link.'
-    };
-  }
-}
+};

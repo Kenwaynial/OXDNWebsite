@@ -49,15 +49,6 @@
         <div class="error-message" id="passwordError"></div>
       </div>
 
-      <div class="password-requirements">
-        <p>Password must contain:</p>
-        <ul>
-          <li id="lengthCheck">At least 6 characters</li>
-          <li id="numberCheck">At least one number</li>
-          <li id="specialCheck">At least one special character</li>
-        </ul>
-      </div>
-
       <button type="submit" class="button1" id="submitBtn">Create Account</button>
 
       <p class="signup-link">
@@ -68,97 +59,42 @@
     <p id="message"></p>
   </main>
   <script type="module">
-    import { registerUser, checkUsernameAvailability } from '../services/registration.js';
+import { register } from '../services/registration.js';
 
-    // Get DOM elements
-    const registerForm = document.getElementById("registerForm");
-    const message = document.getElementById("message");
-    const submitBtn = document.getElementById("submitBtn");
-    const usernameInput = document.getElementById("username");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const usernameError = document.getElementById("usernameError");
-    const emailError = document.getElementById("emailError");
-    const lengthCheck = document.getElementById("lengthCheck");
-    const numberCheck = document.getElementById("numberCheck");
-    const specialCheck = document.getElementById("specialCheck");
+const registerForm = document.getElementById("registerForm");
+const message = document.getElementById("message");
+const submitBtn = document.getElementById("submitBtn");
 
-    // Password validation UI
-    passwordInput.addEventListener('input', () => {
-        const hasLength = passwordInput.value.length >= 6;
-        const hasNumber = /\d/.test(passwordInput.value);
-        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(passwordInput.value);
+registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    message.textContent = "";
+    submitBtn.disabled = true;
 
-        lengthCheck.classList.toggle('valid', hasLength);
-        lengthCheck.classList.toggle('invalid', !hasLength);
-        numberCheck.classList.toggle('valid', hasNumber);
-        numberCheck.classList.toggle('invalid', !hasNumber);
-        specialCheck.classList.toggle('valid', hasSpecial);
-        specialCheck.classList.toggle('invalid', !hasSpecial);
-    });
+    try {
+        message.textContent = "Creating your account...";
+        const result = await register({
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value,
+            username: document.getElementById("username").value.trim()
+        });
 
-    // Real-time username validation
-    let usernameTimeout;
-    usernameInput.addEventListener('input', () => {
-        clearTimeout(usernameTimeout);
-        const username = usernameInput.value.trim();
-
-        if (username.length < 3) {
-            usernameError.textContent = 'Username must be at least 3 characters';
-            usernameInput.parentElement.classList.add('error');
-            return;
+        if (result.success) {
+            message.innerHTML = `${result.message}<br><div class="loading-spinner"></div>`;
+            message.classList.add("success");
+            registerForm.reset();
+            submitBtn.style.display = 'none';
+            setTimeout(() => {
+                window.location.href = "verifyEmail.html";
+            }, 2000);
+        } else {
+            throw new Error(result.message);
         }
-
-        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-            usernameError.textContent = 'Only letters, numbers, and underscores allowed';
-            usernameInput.parentElement.classList.add('error');
-            return;
-        }
-
-        usernameTimeout = setTimeout(async () => {
-            try {
-                const result = await checkUsernameAvailability(username);
-                usernameInput.parentElement.classList.toggle('error', !result.isAvailable);
-                usernameError.textContent = result.message;
-            } catch (error) {
-                console.error('Username check failed:', error);
-            }
-        }, 500);
-    });
-
-    // Form submission
-    registerForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        message.textContent = "";
-        message.classList.remove("error", "success");
-        submitBtn.disabled = true;
-
-        try {
-            message.textContent = "Creating your account...";
-            const result = await registerUser({
-                email: emailInput.value.trim(),
-                password: passwordInput.value,
-                username: usernameInput.value.trim()
-            });
-
-            if (result.success) {
-                message.innerHTML = `${result.message}<br><div class="loading-spinner"></div>`;
-                message.classList.add("success");
-                registerForm.reset();
-                submitBtn.style.display = 'none';
-                
-                setTimeout(() => {
-                    window.location.href = "verifyEmail.html";
-                }, 2000);
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            message.textContent = error.message;
-            message.classList.add("error");
-            submitBtn.disabled = false;
-        }
-    });
+    } catch (error) {
+        message.textContent = error.message;
+        message.classList.add("error");
+        submitBtn.disabled = false;
+    }
+});
   </script>
 
   <style>
@@ -193,23 +129,12 @@
       100% { transform: rotate(360deg); }
     }
 
-    .valid {
-      color: #4CAF50;
-    }
-
-    .invalid {
+    .error {
       color: #f44336;
     }
 
-    .verify-link {
-      display: none;
-      color: #8A2BE2;
-      text-decoration: none;
-      margin-top: 10px;
-    }
-
-    .verify-link.show {
-      display: inline-block;
+    .success {
+      color: #4CAF50;
     }
   </style>
 </body>
