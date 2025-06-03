@@ -5,6 +5,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 DROP TABLE IF EXISTS public.online_status CASCADE;
 DROP TABLE IF EXISTS public.user_stats CASCADE;
 DROP TABLE IF EXISTS public.profiles CASCADE;
+DROP TABLE IF EXISTS public.user_activity CASCADE;
 
 -- Create profiles table
 CREATE TABLE public.profiles (
@@ -25,11 +26,8 @@ CREATE TABLE public.user_activity (
     user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     -- Online status fields
     status TEXT NOT NULL DEFAULT 'offline' CHECK (status IN ('online', 'offline', 'away')),
-    last_seen TIMESTAMPTZ DEFAULT NOW(),
-    -- Stats fields
+    last_seen TIMESTAMPTZ DEFAULT NOW(),    -- Stats fields
     total_logins INTEGER DEFAULT 0,
-    games_played INTEGER DEFAULT 0,
-    tournaments_won INTEGER DEFAULT 0,
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

@@ -12,7 +12,7 @@ export {
 };
 
 // Simple sign up function
-export const signUp = async (email, password) => {
+export const signUp = async (email, password, username) => {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -20,12 +20,29 @@ export const signUp = async (email, password) => {
       options: {
         emailRedirectTo: VERIFY_EMAIL_URL,
         data: {
+          username,
           site_url: SITE_URL
         }
       }
-    })
+    });
     
-    if (error) throw error
+    if (error) throw error;
+
+    // If signup successful, create a profile
+    if (data?.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: data.user.id,
+            username: username,
+            email: email,
+            email_verified: false
+          }
+        ]);
+
+      if (profileError) throw profileError;
+    }
     
     return { data, error: null }
   } catch (error) {

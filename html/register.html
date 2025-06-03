@@ -67,9 +67,8 @@
 
     <p id="message"></p>
   </main>
-
   <script type="module">
-    import { registerWithEmail } from '../services/auth.js';
+    import { signUp } from '../services/auth.js';
     import { supabase } from '../config/supabase.js';
 
     const registerForm = document.getElementById("registerForm");
@@ -139,14 +138,14 @@
         submitBtn.disabled = true;
         message.textContent = "Creating your account...";
         
-        const result = await registerWithEmail(email, password, username);
+        const { data, error } = await signUp(email, password, username);
         
-        if (result.success) {
+        if (!error) {
           // Store the email in sessionStorage for the verification page
           sessionStorage.setItem('pendingVerificationEmail', email);
           
           // Show success message with loading spinner
-          message.innerHTML = `${result.message}<br>
+          message.innerHTML = `Please check your email for a verification link<br>
             <div class="loading-spinner"></div>`;
           message.classList.add("success");
           registerForm.reset();
@@ -158,21 +157,18 @@
               window.location.href = "verifyEmail.html";
             } catch (error) {
               // If redirect fails, show the verify link button
-              message.innerHTML = `${result.message}<br>
+              message.innerHTML = `Please check your email for a verification link<br>
                 <a href="verifyEmail.html" class="verify-link show">Click here to verify your email</a>`;
             }
           }, 2000);
         } else {
-          // Handle specific error cases
-          if (result.message.includes('already registered')) {
+          // Handle error cases
+          if (error.message.includes('already registered')) {
             emailInput.parentElement.classList.add('error');
             emailError.textContent = 'This email is already registered';
-          } else if (result.message.includes('username is already taken')) {
-            usernameInput.parentElement.classList.add('error');
-            usernameError.textContent = 'This username is already taken';
+          } else {
+            message.textContent = error.message;
           }
-          
-          message.textContent = result.message;
           message.classList.add("error");
           submitBtn.disabled = false;
         }
