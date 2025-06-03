@@ -53,9 +53,9 @@
             </p>
         </form>
 
-        <div id="message" class="message"></div>
-    </main>    <script type="module">
-        import { signup } from '../services/registration.js';
+        <div id="message" class="message"></div>    </main>
+    <script type="module">
+        import { register } from '../services/registration.js';
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -70,7 +70,8 @@
                 const password = document.getElementById('password').value;
                 const username = document.getElementById('username').value.trim();
 
-                message.textContent = 'Creating your account...';                const result = await signup(email, password, username);
+                message.textContent = 'Creating your account...';
+                const result = await register(email, password, username);
 
                 if (result.success) {
                     message.className = 'message success';
