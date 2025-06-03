@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { incrementTotalLogins } from './stats.js';
 
 // Constants
 const SITE_URL = 'https://oxdn.vercel.app';
@@ -42,6 +43,11 @@ export const signIn = async (email, password) => {
     })
     
     if (error) throw error
+
+    // Increment login count
+    if (data?.user) {
+      await incrementTotalLogins(data.user.id)
+    }
     
     return { data, error: null }
   } catch (error) {
@@ -104,6 +110,9 @@ export const signInWithGoogle = async () => {
         }
       }
     });
+
+    // Handle login count increment in the callback
+    // since we need to wait for the OAuth flow to complete
 
     if (error) {
       console.error('Google sign-in error:', error);

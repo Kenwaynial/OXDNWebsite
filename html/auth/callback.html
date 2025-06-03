@@ -44,6 +44,7 @@
 
     <script type="module">
         import { supabase } from '../../config/supabase.js';
+        import { incrementTotalLogins } from '../../services/stats.js';
 
         const message = document.getElementById("message");
         const authForm = document.querySelector('.auth-form');
@@ -146,6 +147,9 @@
                     const userId = data.session.user.id;
                     const userEmail = data.session.user.email;
 
+                    // Increment login count
+                    await incrementTotalLogins(userId);
+
                     // First check if user exists in profiles table
                     const { data: existingUser, error: userCheckError } = await supabase
                         .from('profiles')
@@ -215,4 +219,4 @@
         handleCallback();
     </script>
 </body>
-</html> 
+</html>

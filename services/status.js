@@ -2,32 +2,24 @@ import { supabase } from '../config/supabase.js'
 
 export const updateOnlineStatus = async (userId, status) => {
   try {
-    // First try to update existing status
-    const { error: updateError } = await supabase
-      .from('online_status')
-      .update({ 
-        status,
-        last_seen: new Date().toISOString()
-      })
-      .eq('user_id', userId)
-
-    // If no record exists, create one
-    if (updateError?.code === 'PGRST116') {
-      const { error: insertError } = await supabase
-        .from('online_status')
-        .insert([
-          {
-            user_id: userId,
-            status,
-            last_seen: new Date().toISOString()
-          }
-        ])
-
-      if (insertError) throw insertError
-    } else if (updateError) {
-      throw updateError
+    if (!['online', 'offline', 'away'].includes(status)) {
+      throw new Error('Invalid status. Must be one of: online, offline, away')
     }
 
+    // Upsert the status - this handles both insert and update in one operation
+    const { error } = await supabase
+      .from('online_status')
+      .upsert({
+        user_id: userId,
+        status,
+        last_seen: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id',
+        ignoreDuplicates: false
+      })
+
+    if (error) throw error
     return { error: null }
   } catch (error) {
     console.error('Error updating online status:', error)
@@ -52,21 +44,32 @@ export const getOnlineStatus = async (userId) => {
 }
 
 export const getOnlineUsers = async () => {
+  const STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const staleTimestamp = new Date(Date.now() - STALE_THRESHOLD).toISOString();
+  
   const { data, error } = await supabase
     .from('online_status')
     .select(`
       user_id,
       status,
-      current_game,
       last_seen,
       profiles:user_id (
         username,
+        display_name,
         avatar_url,
         role
       )
     `)
-    .eq('status', 'online')
-  return { data, error }
+    .or(`status.eq.online,and(status.eq.away,last_seen.gte.${staleTimestamp})`)
+    .order('last_seen', { ascending: false })
+
+  // Filter out any users whose status is stale
+  const activeUsers = data?.filter(user => {
+    const lastSeen = new Date(user.last_seen).getTime();
+    return Date.now() - lastSeen < STALE_THRESHOLD;
+  }) || [];
+
+  return { data: activeUsers, error }
 }
 
 export const subscribeToOnlineStatus = (callback) => {
@@ -81,4 +84,26 @@ export const subscribeToOnlineStatus = (callback) => {
       callback
     )
     .subscribe()
-} 
+}
+
+export const cleanupStaleStatuses = async () => {
+  try {
+    const STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+    const staleTimestamp = new Date(Date.now() - STALE_THRESHOLD).toISOString();
+
+    const { error } = await supabase
+      .from('online_status')
+      .update({ 
+        status: 'offline',
+        updated_at: new Date().toISOString()
+      })
+      .eq('status', 'online')
+      .lt('last_seen', staleTimestamp)
+
+    if (error) throw error
+    return { error: null }
+  } catch (error) {
+    console.error('Error cleaning up stale statuses:', error)
+    return { error }
+  }
+}

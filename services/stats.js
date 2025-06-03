@@ -67,6 +67,26 @@ export const incrementTournamentsWon = async (userId) => {
   return { data, error }
 }
 
+export const incrementTotalLogins = async (userId) => {
+  try {
+    // Call the RPC function to increment logins and update last activity
+    const { data, error } = await supabase.rpc('increment_total_logins', {
+      user_id: userId
+    })
+
+    if (error) {
+      console.error('Error incrementing total logins:', error)
+      throw error
+    }
+
+    // The function now returns the updated stats
+    return { data, error: null }
+  } catch (error) {
+    console.error('Error incrementing total logins:', error)
+    return { data: null, error }
+  }
+}
+
 export const subscribeToUserStats = (userId, callback) => {
   return supabase
     .channel(`user_stats:${userId}`)
@@ -80,4 +100,4 @@ export const subscribeToUserStats = (userId, callback) => {
       callback
     )
     .subscribe()
-} 
+}
