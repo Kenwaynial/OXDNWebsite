@@ -143,7 +143,7 @@ export const checkEmailAvailability = async (email) => {
  */
 export const registerUser = async ({ email, password, username }) => {
     try {
-        // Validate input
+        // Validate input first
         const emailValidation = validateEmail(email);
         if (!emailValidation.isValid) {
             return { success: false, message: emailValidation.message };
@@ -159,59 +159,26 @@ export const registerUser = async ({ email, password, username }) => {
             return { success: false, message: usernameValidation.message };
         }
 
-        // Check availability
-        const { isAvailable: isUsernameAvailable } = await checkUsernameAvailability(username);
-        if (!isUsernameAvailable) {
+        // Check username availability
+        const { isAvailable } = await checkUsernameAvailability(username);
+        if (!isAvailable) {
             return {
                 success: false,
-                message: 'This username is already taken. Please choose a different username.'
+                message: 'Username is already taken. Please choose a different username.'
             };
         }
 
-        // Register user with minimal metadata first
-        const { data, error: signUpError } = await supabase.auth.signUp({
+        // Register user - profile will be created by database trigger
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
+                data: { username }, // Only pass username, other fields handled by trigger
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
-        if (signUpError) throw signUpError;
-
-        // Create profile separately after successful auth signup
-        if (data?.user?.id) {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert([{
-                    id: data.user.id,
-                    username,
-                    email,
-                    role: 'user',
-                    email_verified: false
-                }]);
-
-            if (profileError) {
-                console.error('Profile creation error:', profileError);
-                // Attempt to cleanup auth user if profile creation fails
-                await supabase.auth.admin.deleteUser(data.user.id);
-                throw new Error('Failed to create user profile');
-            }
-
-            // Create user activity record
-            const { error: activityError } = await supabase
-                .from('user_activity')
-                .insert([{
-                    user_id: data.user.id,
-                    status: 'offline',
-                    last_seen: new Date().toISOString(),
-                    total_logins: 0
-                }]);
-
-            if (activityError) {
-                console.error('Activity record creation error:', activityError);
-            }
-        }
+        if (error) throw error;
 
         // Store email for verification page
         sessionStorage.setItem('pendingVerificationEmail', email);
@@ -225,7 +192,7 @@ export const registerUser = async ({ email, password, username }) => {
         console.error('Registration failed:', error);
         return {
             success: false,
-            message: error.message || 'An error occurred during registration. Please try again.'
+            message: error.message || 'An error occurred during registration'
         };
     }
 };
