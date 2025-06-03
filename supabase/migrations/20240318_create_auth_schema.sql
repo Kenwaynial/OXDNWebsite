@@ -141,6 +141,10 @@ grant execute on function public.check_username_availability(text) to anon, auth
 -- Add row level security
 alter table public.profiles enable row level security;
 
+-- Drop existing policies first
+drop policy if exists "Users can view their own profile" on public.profiles;
+drop policy if exists "Users can update their own profile" on public.profiles;
+
 -- Create policies
 create policy "Users can view their own profile"
   on public.profiles for select
@@ -154,3 +158,5 @@ create policy "Users can update their own profile"
 grant usage on schema profile_manager to anon, authenticated;
 grant execute on function profile_manager.validate_registration to anon;
 grant execute on function public.check_username_availability to anon, authenticated;
+grant usage on schema profile_manager to anon, authenticated;
+grant execute on function profile_manager.validate_registration(text,text) to anon;

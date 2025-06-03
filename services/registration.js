@@ -137,7 +137,12 @@ export const checkEmailAvailability = async (email) => {
 export const validateRegistration = async (username, email) => {
     try {
         const { data, error } = await supabase
-            .rpc('validate_registration', { username, email });
+            .rpc('validate_registration', { 
+                username, 
+                email 
+            }, {
+                schema: 'profile_manager'  // Specify the correct schema
+            });
 
         if (error) throw error;
         return data;
