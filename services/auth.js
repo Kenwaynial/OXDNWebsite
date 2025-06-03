@@ -1,5 +1,4 @@
 import { supabase } from '../config/supabase.js';
-import { incrementTotalLogins } from './stats.js';
 
 // Constants
 const SITE_URL = 'https://oxdn.vercel.app';
@@ -44,9 +43,9 @@ export const signIn = async (email, password) => {
     
     if (error) throw error
 
-    // Increment login count
+    // Update user activity (increments login count and sets status to online)
     if (data?.user) {
-      await incrementTotalLogins(data.user.id)
+      await supabase.rpc('increment_total_logins', { user_id: data.user.id })
     }
     
     return { data, error: null }
@@ -109,10 +108,8 @@ export const signInWithGoogle = async () => {
           prompt: 'consent'
         }
       }
-    });
-
-    // Handle login count increment in the callback
-    // since we need to wait for the OAuth flow to complete
+    });    // Note: The actual activity update happens in the callback page
+    // when the user arrives after successful OAuth authentication
 
     if (error) {
       console.error('Google sign-in error:', error);
@@ -121,6 +118,9 @@ export const signInWithGoogle = async () => {
 
     // If we get here, the OAuth flow has started
     if (data?.url) {
+      // Store the timestamp for the callback page to use
+      sessionStorage.setItem('oauth_start_time', Date.now().toString());
+      
       // Redirect to Google's OAuth page
       window.location.href = data.url;
       return { data, error: null };
@@ -135,19 +135,21 @@ export const signInWithGoogle = async () => {
 
 export const registerWithEmail = async (email, password, username) => {
   try {
-    console.log('Starting registration process for:', { email, username });
-
-    // First check if email already exists
+    console.log('Starting registration process for:', { email, username });    // First check if email already exists
     const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
-      .select('email')
+      .select('email, id')
       .eq('email', email)
 
     if (checkError) {
       console.error('Email check error:', checkError)
-      return {
-        success: false,
-        message: 'Error checking email availability. Please try again.'
+      if (checkError.code === 'PGRST116') {
+        // No profile exists yet, which is fine for a new registration
+      } else {
+        return {
+          success: false,
+          message: 'Error checking email availability. Please try again.'
+        }
       }
     }
 

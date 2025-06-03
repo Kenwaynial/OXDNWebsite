@@ -40,11 +40,9 @@
         <div id="message"></div>
     </main>
 
-    <div class="version">v1.0.1</div>
-
-    <script type="module">
+    <div class="version">v1.0.1</div>    <script type="module">
         import { supabase } from '../../config/supabase.js';
-        import { incrementTotalLogins } from '../../services/stats.js';
+        import { updateUserStatus } from '../../services/userActivity.js';
 
         const message = document.getElementById("message");
         const authForm = document.querySelector('.auth-form');
@@ -145,10 +143,17 @@
 
                 if (data?.session) {
                     const userId = data.session.user.id;
-                    const userEmail = data.session.user.email;
+                    const userEmail = data.session.user.email;                    // Update user activity and status
+                    await supabase.rpc('increment_total_logins', { user_id: userId });
+                    await updateUserStatus(userId, 'online');
 
-                    // Increment login count
-                    await incrementTotalLogins(userId);
+                    // Calculate session duration since OAuth start if available
+                    const oauthStartTime = sessionStorage.getItem('oauth_start_time');
+                    if (oauthStartTime) {
+                        const duration = Date.now() - parseInt(oauthStartTime);
+                        console.log(`OAuth flow completed in ${duration}ms`);
+                        sessionStorage.removeItem('oauth_start_time');
+                    }
 
                     // First check if user exists in profiles table
                     const { data: existingUser, error: userCheckError } = await supabase

@@ -100,13 +100,14 @@
         <div class="spinner"></div>
     </div>
 
-    <div id="error" class="error"></div>
-
-    <script type="module">
+    <div id="error" class="error"></div>    <script type="module">
         import { getCurrentUser, signOut } from '../services/auth.js';
         import { getUserProfile } from '../services/profile.js';
-        import { updateOnlineStatus, subscribeToOnlineStatus } from '../services/status.js';
-        import { getUserStats } from '../services/stats.js';
+        import { 
+            updateUserStatus, 
+            getUserActivity, 
+            subscribeToUserActivity 
+        } from '../services/userActivity.js';
 
         // Check if we're in development mode
         const isDevMode = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && 
@@ -174,17 +175,16 @@
                     throw new Error("No user is currently signed in");
                 }
 
-                // Get user profile
-                const { data: profile, error: profileError } = await getUserProfile(user.id);
+                // Get user profile                const { data: profile, error: profileError } = await getUserProfile(user.id);
                 if (profileError) throw profileError;
 
-                // Get user stats
-                const { data: stats, error: statsError } = await getUserStats(user.id);
-                if (statsError) throw statsError;
+                // Get user activity (combines stats and status)
+                const { data: activity, error: activityError } = await getUserActivity(user.id);
+                if (activityError) throw activityError;
 
                 // Update online status
                 if (user.id) {
-                    const { error: statusError } = await updateOnlineStatus(user.id, 'online');
+                    const { error: statusError } = await updateUserStatus(user.id, 'online');
                     if (statusError) {
                         console.error('Error updating online status:', statusError);
                     }
@@ -195,13 +195,12 @@
                 userName.textContent = displayName;
                 welcomeName.textContent = displayName;
                 userEmail.textContent = user.email || '-';
-                userAvatar.textContent = getInitials(displayName);
-                lastLogin.textContent = formatDate(stats?.last_activity);
+                userAvatar.textContent = getInitials(displayName);                lastLogin.textContent = formatDate(activity?.last_seen);
                 memberSince.textContent = formatDate(profile?.created_at);
                 
-                // Update account status
-                const isActive = true; // We can add more logic here if needed
-                const statusText = isActive ? 'Active Account' : 'Inactive Account';
+                // Update account status based on activity
+                const isActive = activity?.status === 'online';
+                const statusText = activity?.status ? `${activity.status.charAt(0).toUpperCase()}${activity.status.slice(1)}` : 'Offline';
                 const statusClass = isActive ? 'active' : 'inactive';
                 accountStatus.textContent = statusText;
                 accountStatus.className = `status-badge ${statusClass}`;
@@ -245,11 +244,19 @@
         // Set up real-time subscriptions
         if (!isDevMode) {
             const { user, error } = await getCurrentUser();
-            if (user) {
-                // Subscribe to online status changes
-                subscribeToOnlineStatus((payload) => {
-                    console.log('Online status changed:', payload);
-                    // Update UI as needed
+            if (user) {                // Subscribe to user activity changes
+                subscribeToUserActivity(user.id, (payload) => {
+                    console.log('User activity changed:', payload);
+                    // Update UI with new status/stats
+                    if (payload.new) {
+                        lastLogin.textContent = formatDate(payload.new.last_activity);
+                        const statusDot = document.querySelector('.status-dot');
+                        const statusTextElement = document.querySelector('.status-text');
+                        if (statusDot && statusTextElement) {
+                            statusDot.className = `status-dot ${payload.new.status === 'online' ? '' : 'inactive'}`;
+                            statusTextElement.textContent = `${payload.new.status.charAt(0).toUpperCase()}${payload.new.status.slice(1)}`;
+                        }
+                    }
                 });
             }
         }
@@ -265,11 +272,10 @@
                 showLoading();
                 const { error } = await signOut();
                 if (error) throw error;
-                
-                // Update online status to offline
+                  // Update online status to offline
                 const { user } = await getCurrentUser();
                 if (user?.id) {
-                    await updateOnlineStatus(user.id, 'offline');
+                    await updateUserStatus(user.id, 'offline');
                 }
                 
                 window.location.href = 'login.html';
@@ -278,16 +284,14 @@
                 showError(error.message);
                 hideLoading();
             }
-        });
-
-        // Handle page visibility changes
+        });        // Handle page visibility changes
         document.addEventListener('visibilitychange', async () => {
             const { user } = await getCurrentUser();
             if (user?.id) {
                 if (document.visibilityState === 'hidden') {
-                    await updateOnlineStatus(user.id, 'away');
+                    await updateUserStatus(user.id, 'away');
                 } else if (document.visibilityState === 'visible') {
-                    await updateOnlineStatus(user.id, 'online');
+                    await updateUserStatus(user.id, 'online');
                 }
             }
         });
