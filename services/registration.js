@@ -160,14 +160,6 @@ export const registerUser = async ({ email, password, username }) => {
         }
 
         // Check availability
-        const { isAvailable: isEmailAvailable } = await checkEmailAvailability(email);
-        if (!isEmailAvailable) {
-            return {
-                success: false,
-                message: 'This email is already registered. Please use a different email or try logging in.'
-            };
-        }
-
         const { isAvailable: isUsernameAvailable } = await checkUsernameAvailability(username);
         if (!isUsernameAvailable) {
             return {
@@ -176,32 +168,53 @@ export const registerUser = async ({ email, password, username }) => {
             };
         }
 
-        // Store email in sessionStorage for verification page
-        sessionStorage.setItem('pendingVerificationEmail', email);        // Register user (profile will be created by database trigger)
-        const { data, error } = await supabase.auth.signUp({
+        // Register user with minimal metadata first
+        const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: {
-                    username // Only pass username, other fields handled by trigger
-                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
-        if (error) {
-            console.error('Registration error:', error);
-            if (error.message.includes('For security purposes')) {
-                return {
-                    success: false,
-                    message: 'Please wait a moment before trying again.'
-                };
+        if (signUpError) throw signUpError;
+
+        // Create profile separately after successful auth signup
+        if (data?.user?.id) {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert([{
+                    id: data.user.id,
+                    username,
+                    email,
+                    role: 'user',
+                    email_verified: false
+                }]);
+
+            if (profileError) {
+                console.error('Profile creation error:', profileError);
+                // Attempt to cleanup auth user if profile creation fails
+                await supabase.auth.admin.deleteUser(data.user.id);
+                throw new Error('Failed to create user profile');
             }
-            throw error;
+
+            // Create user activity record
+            const { error: activityError } = await supabase
+                .from('user_activity')
+                .insert([{
+                    user_id: data.user.id,
+                    status: 'offline',
+                    last_seen: new Date().toISOString(),
+                    total_logins: 0
+                }]);
+
+            if (activityError) {
+                console.error('Activity record creation error:', activityError);
+            }
         }
 
-        // Wait for the trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Store email for verification page
+        sessionStorage.setItem('pendingVerificationEmail', email);
 
         return {
             success: true,
