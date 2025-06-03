@@ -177,18 +177,13 @@ export const registerUser = async ({ email, password, username }) => {
         }
 
         // Store email in sessionStorage for verification page
-        sessionStorage.setItem('pendingVerificationEmail', email);
-
-        // Register user
+        sessionStorage.setItem('pendingVerificationEmail', email);        // Register user (profile will be created by database trigger)
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
-                    username,
-                    email,
-                    avatar_url: null,
-                    role: 'user'
+                    username // Only pass username, other fields handled by trigger
                 },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
