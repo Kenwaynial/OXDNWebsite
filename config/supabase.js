@@ -17,18 +17,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     site: SITE_URL,
-    // Update redirect configuration
-    redirectTo: RESET_PASSWORD_URL,
-    // Update password reset options
-    passwordReset: {
-      redirectTo: RESET_PASSWORD_URL,
-      maxAge: 3600 // 1 hour in seconds
-    },
-    // Simplified redirect URLs list
+    // Simplified configuration
+    redirectTo: VERIFY_EMAIL_URL,
+    // Add 'http://localhost:3000' for local development
     allowedRedirectUrls: [
-      RESET_PASSWORD_URL,
+      'http://localhost:3000',
+      'http://localhost:5173',
+      SITE_URL,
       VERIFY_EMAIL_URL,
-      AUTH_CALLBACK_URL,
+      RESET_PASSWORD_URL,
+      AUTH_CALLBACK_URL
       // localhost for testing
       'http://localhost:3000/html/auth/resetPassword.html'
     ]

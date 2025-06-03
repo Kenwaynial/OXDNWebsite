@@ -213,23 +213,9 @@
       
       emailInput.parentElement.classList.toggle('error', !isValid);
       emailError.textContent = isValid ? '' : 'Please enter a valid email address';
-      
-      // Check if email is already registered
-      if (isValid) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('email', email);
-            
-          if (data && data.length > 0) {
-            emailInput.parentElement.classList.add('error');
-            emailError.textContent = 'This email is already registered';
-          }
-        } catch (error) {
-          console.error('Email check error:', error);
-        }
-      }
+        // Clear any previous error
+      emailInput.parentElement.classList.toggle('error', !isValid);
+      emailError.textContent = isValid ? '' : 'Please enter a valid email address';
     });
   </script>
 

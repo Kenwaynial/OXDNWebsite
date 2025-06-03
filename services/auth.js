@@ -14,15 +14,27 @@ export {
 // Simple sign up function
 export const signUp = async (email, password, username) => {
   try {
+    // First check if email exists in auth
+    const { data: emailCheck } = await supabase.auth.signInWithPassword({
+      email,
+      password: 'dummy-password'
+    });
+
+    // If we get a successful response, email exists
+    if (emailCheck?.user) {
+      return { 
+        data: null, 
+        error: { message: 'Email is already registered' }
+      };
+    }
+
+    // Proceed with signup
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: VERIFY_EMAIL_URL,
-        data: {
-          username,
-          site_url: SITE_URL
-        }
+        data: { username },
+        emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
     
@@ -30,23 +42,39 @@ export const signUp = async (email, password, username) => {
 
     // If signup successful, create a profile
     if (data?.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
             id: data.user.id,
-            username: username,
-            email: email,
+            username,
+            email,
             email_verified: false
-          }
-        ]);
+          }]);
 
-      if (profileError) throw profileError;
+        if (profileError) {
+          // If profile creation fails, we should clean up the auth user
+          await supabase.auth.admin.deleteUser(data.user.id);
+          throw profileError;
+        }
+      } catch (profileError) {
+        return { 
+          data: null, 
+          error: { message: 'Failed to create profile. Please try again.' }
+        };
+      }
     }
     
-    return { data, error: null }
+    return { 
+      data, 
+      error: null 
+    };
   } catch (error) {
-    return { data: null, error }
+    console.error('Signup error:', error);
+    return { 
+      data: null, 
+      error: { message: error.message || 'Failed to create account' }
+    };
   }
 }
 
