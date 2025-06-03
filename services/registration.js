@@ -136,17 +136,38 @@ export const checkEmailAvailability = async (email) => {
  */
 export const validateRegistration = async (username, email) => {
     try {
+        console.log('Validating registration with database:', { username, email });
         const { data, error } = await supabase
             .rpc('validate_registration', { 
                 input_email: email, 
                 input_username: username 
             });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Database validation error:', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint
+            });
+            throw error;
+        }
+
+        console.log('Database validation result:', data);
         return data;
     } catch (error) {
-        console.error('Validation error:', error);
-        return { valid: false, message: 'Error validating registration' };
+        console.error('Validation error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+        });
+        return { 
+            valid: false, 
+            message: error.message || 'Error validating registration',
+            details: error.details || {}
+        };
     }
 };
 
@@ -160,41 +181,72 @@ export const validateRegistration = async (username, email) => {
  */
 export const registerUser = async ({ email, password, username }) => {
     try {
-        // First validate the registration
-        const validation = await validateRegistration(username, email);
-        if (!validation.valid) {
-            return { success: false, message: validation.message };
-        }
-
-        // Do local validations
+        console.log('Starting registration process for:', { email, username });
+        
+        // Log validation process
+        console.log('Running local validations...');
         const usernameCheck = validateUsername(username);
         const emailCheck = validateEmail(email);
         const passwordCheck = validatePassword(password);
 
+        console.log('Validation results:', {
+            username: usernameCheck,
+            email: emailCheck,
+            password: passwordCheck.isValid // Don't log password details
+        });
+
         if (!usernameCheck.isValid) {
+            console.log('Username validation failed:', usernameCheck.message);
             return { success: false, message: usernameCheck.message };
         }
         if (!emailCheck.isValid) {
+            console.log('Email validation failed:', emailCheck.message);
             return { success: false, message: emailCheck.message };
         }
         if (!passwordCheck.isValid) {
+            console.log('Password validation failed:', passwordCheck.message);
             return { success: false, message: passwordCheck.message };
         }
 
-        // Then create the auth user
+        // Log database validation
+        console.log('Running database validation...');
+        const validation = await validateRegistration(username, email);
+        console.log('Database validation result:', validation);
+
+        if (!validation.valid) {
+            console.log('Database validation failed:', validation.message);
+            return { success: false, message: validation.message };
+        }
+
+        // Log auth signup attempt
+        console.log('Attempting to create auth user...');
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: { 
                     username,
-                    email_verified: false 
+                    email_verified: false,
+                    created_at: new Date().toISOString()
                 },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+            console.error('Signup error details:', {
+                code: signUpError.code,
+                msg: signUpError.message,
+                details: signUpError.details,
+                hint: signUpError.hint
+            });
+            throw signUpError;
+        }
+
+        console.log('Auth user created successfully:', {
+            userId: data.user?.id,
+            email: data.user?.email
+        });
 
         sessionStorage.setItem('pendingVerificationEmail', email);
         return {
@@ -203,10 +255,25 @@ export const registerUser = async ({ email, password, username }) => {
             message: 'Registration successful! Please check your email.'
         };
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('Registration error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+            status: error.status,
+            stack: error.stack
+        });
+
         return {
             success: false,
-            message: error?.message || 'Registration failed'
+            error: {
+                code: error.code,
+                message: error?.message || 'Registration failed',
+                details: error.details || {},
+                hint: error.hint
+            },
+            message: `Registration failed: ${error?.message || 'Unknown error'}`
         };
     }
 };
