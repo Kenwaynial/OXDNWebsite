@@ -37,26 +37,12 @@ export const signUp = async (email, password, username) => {
       email,
       password,
       options: {
-        data: { username },
+        data: { username },  // This will be used by the trigger function
         emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
 
     if (error) throw error;
-
-    // If signup successful, create a profile
-    if (data?.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([{
-          id: data.user.id,
-          username: username,
-          email: email,
-          email_verified: false
-        }]);
-
-      if (profileError) throw profileError;
-    }
     
     return { data, error: null };
   } catch (error) {
@@ -66,11 +52,26 @@ export const signUp = async (email, password, username) => {
 }
 
 export const signIn = async (email, password) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-  return { data, error }
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) throw error;
+
+    // If sign in successful, update the user activity
+    if (data?.user) {
+      await supabase.rpc('increment_total_logins', {
+        user_id: data.user.id
+      });
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error('Sign in error:', error);
+    return { data: null, error };
+  }
 }
 
 export const signInWithGoogle = async () => {
