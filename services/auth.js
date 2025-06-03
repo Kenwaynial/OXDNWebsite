@@ -41,17 +41,18 @@ export const signUp = async (email, password, username) => {
       email,
       password,
       options: {
-        data: { 
-          username,
-          email, // Include email in metadata
-          avatar_url: null,
-          role: 'user'
+        data: {
+          username: username, // Will be used by the trigger
+          email: email,      // Required by profiles table
+          avatar_url: null,  // Optional but included in schema
+          role: 'user'       // Default role
         },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
 
     if (error) {
+      console.error('Signup error details:', error);
       if (error.message.includes('already registered')) {
         return {
           data: null,
@@ -60,6 +61,9 @@ export const signUp = async (email, password, username) => {
       }
       throw error;
     }
+
+    // Wait a short moment to allow the trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     return { 
       data, 
