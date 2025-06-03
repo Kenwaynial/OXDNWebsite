@@ -137,13 +137,9 @@
       try {
         submitBtn.disabled = true;
         message.textContent = "Creating your account...";
+          const result = await signUp(email, password, username);
         
-        const { data, error } = await signUp(email, password, username);
-        
-        if (!error) {
-          // Store the email in sessionStorage for the verification page
-          sessionStorage.setItem('pendingVerificationEmail', email);
-          
+        if (result.success) {
           // Show success message with loading spinner
           message.innerHTML = `Please check your email for a verification link<br>
             <div class="loading-spinner"></div>`;
@@ -160,15 +156,8 @@
               message.innerHTML = `Please check your email for a verification link<br>
                 <a href="verifyEmail.html" class="verify-link show">Click here to verify your email</a>`;
             }
-          }, 2000);
-        } else {
-          // Handle error cases
-          if (error.message.includes('already registered')) {
-            emailInput.parentElement.classList.add('error');
-            emailError.textContent = 'This email is already registered';
-          } else {
-            message.textContent = error.message;
-          }
+          }, 2000);        } else {
+          message.textContent = result.message;
           message.classList.add("error");
           submitBtn.disabled = false;
         }
