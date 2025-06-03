@@ -14,26 +14,39 @@ export {
 // Simple sign up function
 export const signUp = async (email, password, username) => {
   try {
-    // First check if the username is already taken
-    const { data: existingUsername } = await supabase
+    // First check if the username is already taken using case-insensitive search
+    const { data: existingUsername, error: usernameError } = await supabase
       .from('profiles')
       .select('username')
-      .eq('username', username)
-      .single();
+      .ilike('username', username)
+      .limit(1);
 
-    if (existingUsername) {
+    if (usernameError) {
+      console.error('Username check error:', usernameError);
+      return {
+        data: null,
+        error: { message: 'Error checking username availability' }
+      };
+    }
+
+    if (existingUsername && existingUsername.length > 0) {
       return {
         data: null,
         error: { message: 'Username is already taken' }
       };
     }
 
-    // Proceed with signup - the trigger will create the profile
+    // Proceed with signup
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { username }, // This username will be used by the trigger
+        data: { 
+          username,
+          email, // Include email in metadata
+          avatar_url: null,
+          role: 'user'
+        },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
