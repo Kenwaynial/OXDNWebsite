@@ -160,24 +160,41 @@ export const validateRegistration = async (username, email) => {
  */
 export const registerUser = async ({ email, password, username }) => {
     try {
-        // First create the auth user
+        // First validate the registration
+        const validation = await validateRegistration(username, email);
+        if (!validation.valid) {
+            return { success: false, message: validation.message };
+        }
+
+        // Do local validations
+        const usernameCheck = validateUsername(username);
+        const emailCheck = validateEmail(email);
+        const passwordCheck = validatePassword(password);
+
+        if (!usernameCheck.isValid) {
+            return { success: false, message: usernameCheck.message };
+        }
+        if (!emailCheck.isValid) {
+            return { success: false, message: emailCheck.message };
+        }
+        if (!passwordCheck.isValid) {
+            return { success: false, message: passwordCheck.message };
+        }
+
+        // Then create the auth user
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { username },
+                data: { 
+                    username,
+                    email_verified: false 
+                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (signUpError) throw signUpError;
-
-        // Then validate the registration
-        const validation = await validateRegistration(username, email);
-        if (!validation.valid) {
-            // If validation fails, we should handle cleanup here
-            return { success: false, message: validation.message };
-        }
 
         sessionStorage.setItem('pendingVerificationEmail', email);
         return {
