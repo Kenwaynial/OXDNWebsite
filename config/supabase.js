@@ -9,25 +9,22 @@ const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
 const RESET_PASSWORD_URL = `${SITE_URL}/html/auth/resetPassword.html`;
 const AUTH_CALLBACK_URL = `${SITE_URL}/auth/callback`;
 
-// Create Supabase client with explicit site URL and all redirect URLs
+// Create Supabase client with auth configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce',
-    site: SITE_URL,
-    // Simplified configuration
-    redirectTo: VERIFY_EMAIL_URL,
-    // Add 'http://localhost:3000' for local development
-    allowedRedirectUrls: [
+    defaultOptions: {
+      emailRedirectTo: VERIFY_EMAIL_URL
+    }
       'http://localhost:3000',
       'http://localhost:5173',
       SITE_URL,
       VERIFY_EMAIL_URL,
       RESET_PASSWORD_URL,
-      AUTH_CALLBACK_URL
-      // localhost for testing
+      AUTH_CALLBACK_URL,
       'http://localhost:3000/html/auth/resetPassword.html'
     ]
   }
@@ -42,12 +39,38 @@ export {
 };
 
 // Auth helpers
-export const signUp = async (email, password) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
-  return { data, error }
+export const signUp = async (email, password, username) => {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { username },
+        emailRedirectTo: VERIFY_EMAIL_URL
+      }
+    });
+
+    if (error) throw error;
+
+    // If signup successful, create a profile
+    if (data?.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{
+          id: data.user.id,
+          username: username,
+          email: email,
+          email_verified: false
+        }]);
+
+      if (profileError) throw profileError;
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Signup error:', error);
+    return { data: null, error };
+  }
 }
 
 export const signIn = async (email, password) => {
