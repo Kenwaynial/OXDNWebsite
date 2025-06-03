@@ -159,26 +159,21 @@ export const registerUser = async ({ email, password, username }) => {
             return { success: false, message: usernameValidation.message };
         }
 
-        // Check username availability
-        const { isAvailable } = await checkUsernameAvailability(username);
-        if (!isAvailable) {
-            return {
-                success: false,
-                message: 'Username is already taken. Please choose a different username.'
-            };
-        }
-
-        // Register user - profile will be created by database trigger
-        const { data, error } = await supabase.auth.signUp({
+        // Register user with all required data
+        const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { username }, // Only pass username, other fields handled by trigger
+                data: {
+                    username,
+                    email_verified: false,
+                    role: 'user'
+                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
-        if (error) throw error;
+        if (signUpError) throw signUpError;
 
         // Store email for verification page
         sessionStorage.setItem('pendingVerificationEmail', email);
@@ -192,7 +187,7 @@ export const registerUser = async ({ email, password, username }) => {
         console.error('Registration failed:', error);
         return {
             success: false,
-            message: error.message || 'An error occurred during registration'
+            message: 'Registration failed. Please try again later.'
         };
     }
 };

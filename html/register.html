@@ -68,11 +68,7 @@
     <p id="message"></p>
   </main>
   <script type="module">
-    import { 
-      registerUser, 
-      checkUsernameAvailability, 
-      checkEmailAvailability 
-    } from '../services/registration.js';
+    import { registerUser, checkUsernameAvailability } from '../services/registration.js';
 
     // Get DOM elements
     const registerForm = document.getElementById("registerForm");
@@ -83,87 +79,85 @@
     const passwordInput = document.getElementById("password");
     const usernameError = document.getElementById("usernameError");
     const emailError = document.getElementById("emailError");
-    const passwordError = document.getElementById("passwordError");
     const lengthCheck = document.getElementById("lengthCheck");
     const numberCheck = document.getElementById("numberCheck");
     const specialCheck = document.getElementById("specialCheck");
 
     // Password validation UI
     passwordInput.addEventListener('input', () => {
-      const hasLength = passwordInput.value.length >= 6;
-      const hasNumber = /\d/.test(passwordInput.value);
-      const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(passwordInput.value);
+        const hasLength = passwordInput.value.length >= 6;
+        const hasNumber = /\d/.test(passwordInput.value);
+        const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(passwordInput.value);
 
-      lengthCheck.classList.toggle('valid', hasLength);
-      lengthCheck.classList.toggle('invalid', !hasLength);
-      numberCheck.classList.toggle('valid', hasNumber);
-      numberCheck.classList.toggle('invalid', !hasNumber);
-      specialCheck.classList.toggle('valid', hasSpecial);
-      specialCheck.classList.toggle('invalid', !hasSpecial);
+        lengthCheck.classList.toggle('valid', hasLength);
+        lengthCheck.classList.toggle('invalid', !hasLength);
+        numberCheck.classList.toggle('valid', hasNumber);
+        numberCheck.classList.toggle('invalid', !hasNumber);
+        specialCheck.classList.toggle('valid', hasSpecial);
+        specialCheck.classList.toggle('invalid', !hasSpecial);
+    });
+
+    // Real-time username validation
+    let usernameTimeout;
+    usernameInput.addEventListener('input', () => {
+        clearTimeout(usernameTimeout);
+        const username = usernameInput.value.trim();
+
+        if (username.length < 3) {
+            usernameError.textContent = 'Username must be at least 3 characters';
+            usernameInput.parentElement.classList.add('error');
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            usernameError.textContent = 'Only letters, numbers, and underscores allowed';
+            usernameInput.parentElement.classList.add('error');
+            return;
+        }
+
+        usernameTimeout = setTimeout(async () => {
+            try {
+                const result = await checkUsernameAvailability(username);
+                usernameInput.parentElement.classList.toggle('error', !result.isAvailable);
+                usernameError.textContent = result.message;
+            } catch (error) {
+                console.error('Username check failed:', error);
+            }
+        }, 500);
     });
 
     // Form submission
     registerForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      message.textContent = "";
-      message.classList.remove("error", "success");
-
-      const username = usernameInput.value.trim();
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      try {
+        e.preventDefault();
+        message.textContent = "";
+        message.classList.remove("error", "success");
         submitBtn.disabled = true;
-        message.textContent = "Creating your account...";
 
-        const result = await registerUser({ email, password, username });
-        
-        if (result.success) {
-          message.innerHTML = `${result.message}<br><div class="loading-spinner"></div>`;
-          message.classList.add("success");
-          registerForm.reset();
-          submitBtn.style.display = 'none';
+        try {
+            message.textContent = "Creating your account...";
+            const result = await registerUser({
+                email: emailInput.value.trim(),
+                password: passwordInput.value,
+                username: usernameInput.value.trim()
+            });
 
-          setTimeout(() => {
-            window.location.href = "verifyEmail.html";
-          }, 2000);
-        } else {
-          message.textContent = result.message;
-          message.classList.add("error");
-          submitBtn.disabled = false;
+            if (result.success) {
+                message.innerHTML = `${result.message}<br><div class="loading-spinner"></div>`;
+                message.classList.add("success");
+                registerForm.reset();
+                submitBtn.style.display = 'none';
+                
+                setTimeout(() => {
+                    window.location.href = "verifyEmail.html";
+                }, 2000);
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            message.textContent = error.message;
+            message.classList.add("error");
+            submitBtn.disabled = false;
         }
-      } catch (error) {
-        console.error('Registration error:', error);
-        message.textContent = "An error occurred during registration. Please try again.";
-        message.classList.add("error");
-        submitBtn.disabled = false;
-      }
-    });
-
-    // Real-time username validation
-    usernameInput.addEventListener('input', async () => {
-      const username = usernameInput.value.trim();
-      if (username.length >= 3) {
-        const result = await checkUsernameAvailability(username);
-        usernameInput.parentElement.classList.toggle('error', !result.isAvailable);
-        usernameError.textContent = result.message;
-      } else {
-        usernameInput.parentElement.classList.remove('error');
-        usernameError.textContent = '';
-      }
-    });
-
-    // Real-time email validation
-    emailInput.addEventListener('input', async () => {
-      const email = emailInput.value.trim();
-      if (email && email.includes('@')) {
-        const result = await checkEmailAvailability(email);
-        emailInput.parentElement.classList.toggle('error', !result.isAvailable);
-        emailError.textContent = result.message;
-      } else {
-        emailInput.parentElement.classList.remove('error');
-        emailError.textContent = '';
-      }
     });
   </script>
 
