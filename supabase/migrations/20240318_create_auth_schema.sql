@@ -67,16 +67,17 @@ create trigger on_auth_user_created
   for each row
   execute function profile_manager.initialize_user_profile();
 
--- Create RPC function for registration checks
-create or replace function profile_manager.validate_registration(
-  username text,
-  email text
+-- Move validation function to public schema
+drop function if exists profile_manager.validate_registration(text,text);
+create or replace function public.validate_registration(
+  input_username text,
+  input_email text
 ) returns json as $$
 declare
   result json;
 begin
   -- Check username format
-  if length(username) < 3 or length(username) > 30 then
+  if length(input_username) < 3 or length(input_username) > 30 then
     return json_build_object(
       'valid', false,
       'message', 'Username must be between 3 and 30 characters'
@@ -84,7 +85,7 @@ begin
   end if;
 
   -- Check username characters
-  if not username ~ '^[a-zA-Z0-9_]+$' then
+  if not input_username ~ '^[a-zA-Z0-9_]+$' then
     return json_build_object(
       'valid', false,
       'message', 'Username can only contain letters, numbers, and underscores'
@@ -92,15 +93,14 @@ begin
   end if;
 
   -- Check if username exists
-  if not profile_manager.check_username_availability(username) then
+  if not public.check_username_availability(input_username) then
     return json_build_object(
       'valid', false,
       'message', 'Username is already taken'
     );
   end if;
-
   -- Check email format
-  if not email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$' then
+  if not input_email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$' then
     return json_build_object(
       'valid', false,
       'message', 'Invalid email format'
@@ -108,7 +108,7 @@ begin
   end if;
 
   -- Check if email exists
-  if exists (select 1 from public.profiles where profiles.email = email) then
+  if exists (select 1 from public.profiles where profiles.email = input_email) then
     return json_build_object(
       'valid', false,
       'message', 'Email is already registered'
@@ -122,6 +122,9 @@ begin
   );
 end;
 $$ language plpgsql security definer;
+
+-- Update grants
+grant execute on function public.validate_registration(text,text) to anon, authenticated;
 
 -- Fix RPC function schema and grants
 drop function if exists profile_manager.check_username_availability(text);
@@ -156,7 +159,5 @@ create policy "Users can update their own profile"
 
 -- Grant permissions
 grant usage on schema profile_manager to anon, authenticated;
-grant execute on function profile_manager.validate_registration to anon;
 grant execute on function public.check_username_availability to anon, authenticated;
 grant usage on schema profile_manager to anon, authenticated;
-grant execute on function profile_manager.validate_registration(text,text) to anon;
