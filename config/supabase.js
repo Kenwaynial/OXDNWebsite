@@ -31,35 +31,65 @@ export {
 };
 
 // Auth helpers
-export const signUp = async (email, password, username) => {  try {
-    // First check if username already exists
+export const signUp = async (email, password, username) => {
+  try {
+    // First check if username already exists using proper query format
     const { data: existingUsers, error: checkError } = await supabase
       .from('profiles')
       .select('username')
-      .eq('username', username);
+      .ilike('username', username)
+      .limit(1);
 
     if (checkError) {
       console.error('Username check error:', checkError);
-      throw new Error('Error checking username availability');
+      return { data: null, error: 'Error checking username availability' };
     }
 
     if (existingUsers && existingUsers.length > 0) {
-      throw new Error('Username already taken');
+      return { data: null, error: 'Username already taken' };
     }
 
-    // Proceed with signup if username is available
-    const { data, error } = await supabase.auth.signUp({
+    // Proceed with signup
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { username },
+        data: {
+          username: username,
+          avatar_url: null,  // Add default values
+          role: 'user'       // Add default role
+        },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
 
-    if (error) throw error;
+    if (signUpError) {
+      console.error('Auth signup error:', signUpError);
+      return { data: null, error: signUpError };
+    }
+
+    // Create the profile record explicitly
+    if (authData?.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: authData.user.id,
+            username: username,
+            avatar_url: null,
+            role: 'user',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ]);
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        return { data: null, error: 'Failed to create user profile' };
+      }
+    }
     
-    return { data, error: null };
+    return { data: authData, error: null };
   } catch (error) {
     console.error('Signup error:', error);
     return { data: null, error };
