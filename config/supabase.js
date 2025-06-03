@@ -9,7 +9,7 @@ const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
 const RESET_PASSWORD_URL = `${SITE_URL}/html/auth/resetPassword.html`;
 const AUTH_CALLBACK_URL = `${SITE_URL}/auth/callback`;
 
-// Create Supabase client with auth configuration
+// Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -19,14 +19,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     defaultOptions: {
       emailRedirectTo: VERIFY_EMAIL_URL
     }
-      'http://localhost:3000',
-      'http://localhost:5173',
-      SITE_URL,
-      VERIFY_EMAIL_URL,
-      RESET_PASSWORD_URL,
-      AUTH_CALLBACK_URL,
-      'http://localhost:3000/html/auth/resetPassword.html'
-    ]
   }
 })
 
