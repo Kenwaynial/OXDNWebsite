@@ -183,69 +183,63 @@ export const registerUser = async ({ email, password, username }) => {
     try {
         console.log('Starting registration process for:', { email, username });
         
-        // Log validation process
-        console.log('Running local validations...');
+        // First do all validations
         const usernameCheck = validateUsername(username);
         const emailCheck = validateEmail(email);
         const passwordCheck = validatePassword(password);
-
-        console.log('Validation results:', {
-            username: usernameCheck,
-            email: emailCheck,
-            password: passwordCheck.isValid // Don't log password details
+        console.log('Local validation results:', {
+            username: usernameCheck.isValid,
+            email: emailCheck.isValid,
+            password: passwordCheck.isValid
         });
 
-        if (!usernameCheck.isValid) {
-            console.log('Username validation failed:', usernameCheck.message);
-            return { success: false, message: usernameCheck.message };
-        }
-        if (!emailCheck.isValid) {
-            console.log('Email validation failed:', emailCheck.message);
-            return { success: false, message: emailCheck.message };
-        }
-        if (!passwordCheck.isValid) {
-            console.log('Password validation failed:', passwordCheck.message);
-            return { success: false, message: passwordCheck.message };
+        if (!usernameCheck.isValid) return { success: false, message: usernameCheck.message };
+        if (!emailCheck.isValid) return { success: false, message: emailCheck.message };
+        if (!passwordCheck.isValid) return { success: false, message: passwordCheck.message };
+
+        // Check availability
+        const usernameAvailable = await checkUsernameAvailability(username);
+        if (!usernameAvailable.isAvailable) {
+            return { success: false, message: 'Username is already taken' };
         }
 
-        // Log database validation
-        console.log('Running database validation...');
-        const validation = await validateRegistration(username, email);
-        console.log('Database validation result:', validation);
-
-        if (!validation.valid) {
-            console.log('Database validation failed:', validation.message);
-            return { success: false, message: validation.message };
-        }
-
-        // Log auth signup attempt
         console.log('Attempting to create auth user...');
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: { 
-                    username,
-                    email_verified: false,
-                    created_at: new Date().toISOString()
+                    username // Simplified metadata
                 },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (signUpError) {
-            console.error('Signup error details:', {
+            console.error('Signup error:', {
                 code: signUpError.code,
-                msg: signUpError.message,
-                details: signUpError.details,
-                hint: signUpError.hint
+                message: signUpError.message,
+                details: signUpError.details
             });
+            
+            // Handle specific error cases
+            if (signUpError.message?.includes('Database error')) {
+                return { 
+                    success: false, 
+                    message: 'Unable to create account. Please try again later.',
+                    error: signUpError
+                };
+            }
             throw signUpError;
         }
 
+        if (!data?.user?.id) {
+            throw new Error('No user ID returned from signup');
+        }
+
         console.log('Auth user created successfully:', {
-            userId: data.user?.id,
-            email: data.user?.email
+            userId: data.user.id,
+            email: data.user.email
         });
 
         sessionStorage.setItem('pendingVerificationEmail', email);
@@ -255,25 +249,21 @@ export const registerUser = async ({ email, password, username }) => {
             message: 'Registration successful! Please check your email.'
         };
     } catch (error) {
-        console.error('Registration error details:', {
+        console.error('Registration error:', {
             name: error.name,
             message: error.message,
             code: error.code,
-            details: error.details,
-            hint: error.hint,
-            status: error.status,
-            stack: error.stack
+            details: error.details
         });
 
         return {
             success: false,
+            message: error?.message || 'Registration failed. Please try again.',
             error: {
                 code: error.code,
-                message: error?.message || 'Registration failed',
-                details: error.details || {},
-                hint: error.hint
-            },
-            message: `Registration failed: ${error?.message || 'Unknown error'}`
+                message: error.message,
+                details: error.details
+            }
         };
     }
 };
