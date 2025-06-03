@@ -78,27 +78,18 @@ const validatePassword = (password) => {
  */
 export const checkUsernameAvailability = async (username) => {
     try {
-        const { data: existingUsers, error } = await supabase
-            .from('profiles')
-            .select('username')
-            .ilike('username', username)
-            .limit(1);
+        const { data, error } = await supabase
+            .rpc('check_username_availability', { username });
 
-        if (error) {
-            console.error('Username check error:', error);
-            throw error;
-        }
+        if (error) throw error;
 
         return {
-            isAvailable: !existingUsers?.length,
-            message: existingUsers?.length ? 'Username is already taken' : 'Username is available'
+            isAvailable: data,
+            message: data ? 'Username is available' : 'Username is already taken'
         };
     } catch (error) {
-        console.error('Username availability check failed:', error);
-        return {
-            isAvailable: false,
-            message: 'Error checking username availability'
-        };
+        console.error('Username check error:', error);
+        return { isAvailable: false, message: 'Error checking username' };
     }
 };
 
@@ -134,6 +125,25 @@ export const checkEmailAvailability = async (email) => {
 };
 
 /**
+ * Validate registration parameters using the database function
+ * @param {string} username - The username to validate
+ * @param {string} email - The email to validate
+ * @returns {Promise<Object>} Validation result
+ */
+export const validateRegistration = async (username, email) => {
+    try {
+        const { data, error } = await supabase
+            .rpc('validate_registration', { username, email });
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Validation error:', error);
+        return { valid: false, message: 'Error validating registration' };
+    }
+};
+
+/**
  * Registers a new user
  * @param {Object} params - Registration parameters
  * @param {string} params.email - User's email
@@ -143,51 +153,35 @@ export const checkEmailAvailability = async (email) => {
  */
 export const registerUser = async ({ email, password, username }) => {
     try {
-        // Validate input first
-        const emailValidation = validateEmail(email);
-        if (!emailValidation.isValid) {
-            return { success: false, message: emailValidation.message };
+        // Validate using database function
+        const validation = await validateRegistration(username, email);
+        if (!validation.valid) {
+            return { success: false, message: validation.message };
         }
 
-        const passwordValidation = validatePassword(password);
-        if (!passwordValidation.isValid) {
-            return { success: false, message: passwordValidation.message };
-        }
-
-        const usernameValidation = validateUsername(username);
-        if (!usernameValidation.isValid) {
-            return { success: false, message: usernameValidation.message };
-        }
-
-        // Register user with all required data
+        // Register user (profile creation handled by trigger)
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: {
-                    username,
-                    email_verified: false,
-                    role: 'user'
-                },
+                data: { username },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (signUpError) throw signUpError;
 
-        // Store email for verification page
         sessionStorage.setItem('pendingVerificationEmail', email);
-
         return {
             success: true,
             data,
-            message: 'Registration successful! Please check your email to verify your account.'
+            message: 'Registration successful! Please check your email.'
         };
     } catch (error) {
-        console.error('Registration failed:', error);
+        console.error('Registration error:', error);
         return {
             success: false,
-            message: 'Registration failed. Please try again later.'
+            message: error.message || 'Registration failed'
         };
     }
 };
