@@ -118,6 +118,10 @@ CREATE POLICY "Users can update own profile"
     ON public.profiles FOR UPDATE
     USING (auth.uid() = id);
 
+CREATE POLICY "Allow trigger to insert profile"
+    ON public.profiles FOR INSERT
+    WITH CHECK (true);
+
 -- User activity policies
 CREATE POLICY "User activity is viewable by everyone"
     ON public.user_activity FOR SELECT
@@ -126,6 +130,10 @@ CREATE POLICY "User activity is viewable by everyone"
 CREATE POLICY "Users can update own activity"
     ON public.user_activity FOR UPDATE
     USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow trigger to insert user activity"
+    ON public.user_activity FOR INSERT
+    WITH CHECK (true);
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON public.profiles(username);

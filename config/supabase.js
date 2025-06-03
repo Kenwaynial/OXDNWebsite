@@ -33,11 +33,23 @@ export {
 // Auth helpers
 export const signUp = async (email, password, username) => {
   try {
+    // First check if username already exists
+    const { data: existingUser } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (existingUser) {
+      throw new Error('Username already taken');
+    }
+
+    // Proceed with signup if username is available
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { username },  // This will be used by the trigger function
+        data: { username },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
@@ -58,13 +70,20 @@ export const signIn = async (email, password) => {
       password,
     });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Sign in error details:', error);
+      throw error;
+    }
 
     // If sign in successful, update the user activity
     if (data?.user) {
-      await supabase.rpc('increment_total_logins', {
+      const { error: rpcError } = await supabase.rpc('increment_total_logins', {
         user_id: data.user.id
       });
+
+      if (rpcError) {
+        console.error('Failed to increment login count:', rpcError);
+      }
     }
 
     return { data, error: null };

@@ -14,55 +14,38 @@ export {
 // Simple sign up function
 export const signUp = async (email, password, username) => {
   try {
-    // First check if email exists in auth
-    const { data: emailCheck } = await supabase.auth.signInWithPassword({
-      email,
-      password: 'dummy-password'
-    });
+    // First check if the username is already taken
+    const { data: existingUsername } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
 
-    // If we get a successful response, email exists
-    if (emailCheck?.user) {
-      return { 
-        data: null, 
-        error: { message: 'Email is already registered' }
+    if (existingUsername) {
+      return {
+        data: null,
+        error: { message: 'Username is already taken' }
       };
     }
 
-    // Proceed with signup
+    // Proceed with signup - the trigger will create the profile
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { username },
+        data: { username }, // This username will be used by the trigger
         emailRedirectTo: VERIFY_EMAIL_URL
       }
     });
-    
-    if (error) throw error;
 
-    // If signup successful, create a profile
-    if (data?.user) {
-      try {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: data.user.id,
-            username,
-            email,
-            email_verified: false
-          }]);
-
-        if (profileError) {
-          // If profile creation fails, we should clean up the auth user
-          await supabase.auth.admin.deleteUser(data.user.id);
-          throw profileError;
-        }
-      } catch (profileError) {
-        return { 
-          data: null, 
-          error: { message: 'Failed to create profile. Please try again.' }
+    if (error) {
+      if (error.message.includes('already registered')) {
+        return {
+          data: null,
+          error: { message: 'Email is already registered' }
         };
       }
+      throw error;
     }
     
     return { 
