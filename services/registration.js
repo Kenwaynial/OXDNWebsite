@@ -129,49 +129,6 @@ export const checkEmailAvailability = async (email) => {
 };
 
 /**
- * Validate registration parameters using the database function
- * @param {string} username - The username to validate
- * @param {string} email - The email to validate
- * @returns {Promise<Object>} Validation result
- */
-export const validateRegistration = async (username, email) => {
-    try {
-        console.log('Validating registration with database:', { username, email });
-        const { data, error } = await supabase
-            .rpc('validate_registration', { 
-                input_email: email, 
-                input_username: username 
-            });
-
-        if (error) {
-            console.error('Database validation error:', {
-                code: error.code,
-                message: error.message,
-                details: error.details,
-                hint: error.hint
-            });
-            throw error;
-        }
-
-        console.log('Database validation result:', data);
-        return data;
-    } catch (error) {
-        console.error('Validation error details:', {
-            name: error.name,
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint
-        });
-        return { 
-            valid: false, 
-            message: error.message || 'Error validating registration',
-            details: error.details || {}
-        };
-    }
-};
-
-/**
  * Registers a new user
  * @param {Object} params - Registration parameters
  * @param {string} params.email - User's email
@@ -183,63 +140,72 @@ export const registerUser = async ({ email, password, username }) => {
     try {
         console.log('Starting registration process for:', { email, username });
         
-        // First do all validations
+        // Local validations
         const usernameCheck = validateUsername(username);
         const emailCheck = validateEmail(email);
         const passwordCheck = validatePassword(password);
-        console.log('Local validation results:', {
-            username: usernameCheck.isValid,
-            email: emailCheck.isValid,
-            password: passwordCheck.isValid
-        });
 
         if (!usernameCheck.isValid) return { success: false, message: usernameCheck.message };
         if (!emailCheck.isValid) return { success: false, message: emailCheck.message };
         if (!passwordCheck.isValid) return { success: false, message: passwordCheck.message };
 
-        // Check availability
-        const usernameAvailable = await checkUsernameAvailability(username);
-        if (!usernameAvailable.isAvailable) {
-            return { success: false, message: 'Username is already taken' };
+        // Check username availability one last time
+        const { isAvailable, message: availabilityMessage } = await checkUsernameAvailability(username);
+        if (!isAvailable) {
+            return { success: false, message: availabilityMessage };
         }
 
-        console.log('Attempting to create auth user...');
+        console.log('All validations passed, creating user...');
+
+        // Create auth user with minimal metadata
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { 
-                    username // Simplified metadata
-                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (signUpError) {
-            console.error('Signup error:', {
+            console.error('Auth signup error:', {
                 code: signUpError.code,
                 message: signUpError.message,
                 details: signUpError.details
             });
-            
-            // Handle specific error cases
-            if (signUpError.message?.includes('Database error')) {
-                return { 
-                    success: false, 
-                    message: 'Unable to create account. Please try again later.',
-                    error: signUpError
-                };
-            }
-            throw signUpError;
+            return { 
+                success: false, 
+                message: 'Account creation failed. Please try again.',
+                error: signUpError
+            };
         }
 
         if (!data?.user?.id) {
             throw new Error('No user ID returned from signup');
         }
 
-        console.log('Auth user created successfully:', {
+        // Create profile separately
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+                id: data.user.id,
+                username,
+                email,
+                created_at: new Date().toISOString()
+            }]);
+
+        if (profileError) {
+            console.error('Profile creation error:', profileError);
+            // Try to cleanup auth user
+            await supabase.auth.admin.deleteUser(data.user.id);
+            return {
+                success: false,
+                message: 'Failed to create user profile. Please try again.'
+            };
+        }
+
+        console.log('User registered successfully:', {
             userId: data.user.id,
-            email: data.user.email
+            username
         });
 
         sessionStorage.setItem('pendingVerificationEmail', email);
@@ -258,7 +224,7 @@ export const registerUser = async ({ email, password, username }) => {
 
         return {
             success: false,
-            message: error?.message || 'Registration failed. Please try again.',
+            message: 'Registration failed. Please try again later.',
             error: {
                 code: error.code,
                 message: error.message,
