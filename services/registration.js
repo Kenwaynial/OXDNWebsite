@@ -160,13 +160,7 @@ export const validateRegistration = async (username, email) => {
  */
 export const registerUser = async ({ email, password, username }) => {
     try {
-        // Validate using database function
-        const validation = await validateRegistration(username, email);
-        if (!validation.valid) {
-            return { success: false, message: validation.message };
-        }
-
-        // Register user (profile creation handled by trigger)
+        // First create the auth user
         const { data, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
@@ -178,6 +172,13 @@ export const registerUser = async ({ email, password, username }) => {
 
         if (signUpError) throw signUpError;
 
+        // Then validate the registration
+        const validation = await validateRegistration(username, email);
+        if (!validation.valid) {
+            // If validation fails, we should handle cleanup here
+            return { success: false, message: validation.message };
+        }
+
         sessionStorage.setItem('pendingVerificationEmail', email);
         return {
             success: true,
@@ -188,7 +189,7 @@ export const registerUser = async ({ email, password, username }) => {
         console.error('Registration error:', error);
         return {
             success: false,
-            message: error.message || 'Registration failed'
+            message: error?.message || 'Registration failed'
         };
     }
 };
