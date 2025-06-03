@@ -286,3 +286,88 @@ export const completeRegistration = async (userId) => {
         };
     }
 };
+
+/**
+ * Sign in with Google OAuth
+ * @returns {Promise<Object>} OAuth result
+ */
+export const signInWithGoogle = async () => {
+    try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${SITE_URL}/html/auth/callback.html`,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent'
+                }
+            }
+        });    
+        
+        if (error) {
+            console.error('Google sign-in error:', error);
+            throw error;
+        }
+
+        // Start OAuth flow
+        if (data?.url) {
+            sessionStorage.setItem('oauth_start_time', Date.now().toString());
+            window.location.href = data.url;
+            return { data, error: null };
+        } else {
+            throw new Error('Failed to start Google sign-in process');
+        }
+    } catch (error) {
+        console.error('Google sign-in error:', error);
+        return { data: null, error };
+    }
+};
+
+/**
+ * Reset password email flow
+ * @param {string} email - User's email
+ * @returns {Promise<Object>} Reset password result
+ */
+export const resetPassword = async (email) => {
+    try {
+        const timestamp = Date.now();
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${SITE_URL}/html/auth/resetPassword.html?t=${timestamp}`
+        });
+
+        if (error) throw error;
+
+        return { 
+            data, 
+            error: null,
+            message: 'Password reset link sent! Link expires in 5 minutes.' 
+        };
+    } catch (error) {
+        return { 
+            data: null, 
+            error,
+            message: error.message || 'Failed to send reset link' 
+        };
+    }
+};
+
+/**
+ * Validate reset password token
+ * @param {string} token - Reset token to validate
+ * @returns {Promise<Object>} Validation result
+ */
+export const validateResetToken = async (token) => {
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+        
+        if (error) throw error;
+        
+        return { isValid: true, error: null };
+    } catch (error) {
+        console.error('Token validation error:', error);
+        return { 
+            isValid: false, 
+            error: error.message || 'Invalid or expired reset link.'
+        };
+    }
+};
