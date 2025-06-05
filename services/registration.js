@@ -263,7 +263,45 @@ export async function register(email, password, username) {
         const usernameAvailability = await checkUsernameAvailability(username);
         if (!usernameAvailability.isAvailable) {
             return { success: false, message: usernameAvailability.message };
-        }        // Register user with Supabase
+        }        // Check if user already exists with this email
+        const { data: existingUser } = await supabase
+            .from('profiles')
+            .select('email_verified')
+            .eq('email', email)
+            .single();
+
+        if (existingUser) {
+            if (!existingUser.email_verified) {
+                return {
+                    success: false,
+                    message: 'This email is already registered but not verified.',
+                    needsVerification: true,
+                    email: email
+                };
+            } else {
+                return {
+                    success: false,
+                    message: 'This email is already registered. Please log in instead.',
+                    alreadyRegistered: true
+                };
+            }
+        }
+
+        // Check if username is already taken
+        const { data: existingUsername } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('username', username)
+            .single();
+
+        if (existingUsername) {
+            return {
+                success: false,
+                message: 'This username is already taken. Please choose another.'
+            };
+        }
+
+        // Register user with Supabase
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
@@ -277,25 +315,20 @@ export async function register(email, password, username) {
 
         if (authError) throw authError;
 
-        // Create profile entry
-        // We need to use the auth token to create the profile
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-            throw new Error('Failed to get authentication session');
+        if (!authData.user) {
+            throw new Error('Failed to create user account');
         }
 
-        // Create profile entry with authenticated client
+        // Create profile entry without requiring session
         const { error: profileError } = await supabase
             .from('profiles')
             .insert([{ 
                 id: authData.user.id,
                 username,
                 email,
+                email_verified: false,
                 created_at: new Date().toISOString()
-            }])
-            .select()
-            .single();
+            }]);
 
         if (profileError) {
             // If profile creation fails, attempt to clean up the auth user

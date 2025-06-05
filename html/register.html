@@ -56,6 +56,26 @@
         <div id="message" class="message"></div>    </main>
     <script type="module">
         import { register } from '../services/registration.js';
+        import { resendVerificationEmail } from '../services/registration.js';
+
+        window.resendVerification = async (email) => {
+            const message = document.getElementById('message');
+            try {
+                const result = await resendVerificationEmail(email);
+                if (result.success) {
+                    message.className = 'message success';
+                    message.innerHTML = `${result.message}<div class="spinner"></div>`;
+                    setTimeout(() => {
+                        window.location.href = 'verifyEmail.html';
+                    }, 2000);
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                message.className = 'message error';
+                message.textContent = error.message;
+            }
+        };
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -73,15 +93,27 @@
                     email,
                     password,
                     username
-                );
-
-                if (result.success) {
+                );                if (result.success) {
                     message.className = 'message success';
                     message.innerHTML = `${result.message}<div class="spinner"></div>`;
                     e.target.reset();
                     setTimeout(() => {
                         window.location.href = 'verifyEmail.html';
                     }, 2000);
+                } else if (result.needsVerification) {
+                    message.className = 'message warning';
+                    message.innerHTML = `
+                        ${result.message}<br>
+                        <button onclick="resendVerification('${result.email}')" class="button2">
+                            Resend Verification Email
+                        </button>
+                    `;
+                } else if (result.alreadyRegistered) {
+                    message.className = 'message info';
+                    message.innerHTML = `
+                        ${result.message}<br>
+                        <a href="login.html" class="button2">Go to Login</a>
+                    `;
                 } else {
                     throw new Error(result.message);
                 }
@@ -127,6 +159,16 @@
             background-color: rgba(76, 175, 80, 0.1);
         }
 
+        .message.warning {
+            color: #ff9800;
+            background-color: rgba(255, 152, 0, 0.1);
+        }
+
+        .message.info {
+            color: #2196F3;
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+
         .spinner {
             width: 20px;
             height: 20px;
@@ -135,6 +177,24 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 10px auto;
+        }
+
+        .button2 {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: transparent;
+            border: 1px solid currentColor;
+            border-radius: 4px;
+            color: inherit;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .button2:hover {
+            background-color: currentColor;
+            color: white;
         }
 
         @keyframes spin {
