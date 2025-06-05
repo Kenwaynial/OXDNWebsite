@@ -263,31 +263,45 @@ export async function register(email, password, username) {
         const usernameAvailability = await checkUsernameAvailability(username);
         if (!usernameAvailability.isAvailable) {
             return { success: false, message: usernameAvailability.message };
-        }
-
-        // Register user with Supabase
+        }        // Register user with Supabase
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
                     username
-                }
+                },
+                emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (authError) throw authError;
 
         // Create profile entry
+        // We need to use the auth token to create the profile
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            throw new Error('Failed to get authentication session');
+        }
+
+        // Create profile entry with authenticated client
         const { error: profileError } = await supabase
             .from('profiles')
             .insert([{ 
                 id: authData.user.id,
                 username,
-                email
-            }]);
+                email,
+                created_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+            // If profile creation fails, attempt to clean up the auth user
+            await supabase.auth.admin.deleteUser(authData.user.id);
+            throw profileError;
+        }
 
         return {
             success: true,
