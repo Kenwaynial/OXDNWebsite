@@ -235,6 +235,74 @@ export const registerUser = async ({ email, password, username }) => {
 };
 
 /**
+ * Register a new user
+ * @param {string} email - User's email
+ * @param {string} password - User's password
+ * @param {string} username - User's username
+ * @returns {Promise<Object>} Registration result
+ */
+export async function register(email, password, username) {
+    try {
+        // Validate input
+        const emailValidation = validateEmail(email);
+        if (!emailValidation.isValid) {
+            return { success: false, message: emailValidation.message };
+        }
+
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+            return { success: false, message: passwordValidation.message };
+        }
+
+        const usernameValidation = validateUsername(username);
+        if (!usernameValidation.isValid) {
+            return { success: false, message: usernameValidation.message };
+        }
+
+        // Check if username is available
+        const usernameAvailability = await checkUsernameAvailability(username);
+        if (!usernameAvailability.isAvailable) {
+            return { success: false, message: usernameAvailability.message };
+        }
+
+        // Register user with Supabase
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    username
+                }
+            }
+        });
+
+        if (authError) throw authError;
+
+        // Create profile entry
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([{ 
+                id: authData.user.id,
+                username,
+                email
+            }]);
+
+        if (profileError) throw profileError;
+
+        return {
+            success: true,
+            message: 'Registration successful! Please check your email to verify your account.'
+        };
+    } catch (error) {
+        console.error('Registration error:', error);
+        return {
+            success: false,
+            message: error.message || 'Failed to create account'
+        };
+    }
+}
+
+/**
  * Resends verification email
  * @param {string} email - User's email
  * @returns {Promise<Object>} Result of the operation
