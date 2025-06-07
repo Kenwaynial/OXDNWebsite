@@ -89,10 +89,9 @@ export const signUp = async (email, password, username) => {
       password,
       options: {
         data: {
-          username, // Only pass essential fields
+          username,
           email,
-          role: 'user',
-          email_verified: false
+          role: 'user'
         },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
