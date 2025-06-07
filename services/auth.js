@@ -188,4 +188,21 @@ export const checkVerificationStatus = async () => {
             message: error.message || 'Failed to check verification status'
         };
     }
+}
+
+// Google Sign In function
+export const signInWithGoogle = async () => {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/html/auth/callback.html`,
+      },
+    });
+    
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error };
+  }
 };

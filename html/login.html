@@ -91,21 +91,25 @@
         message.textContent = error.message;
         message.classList.add("error");
       }
-    });
-
-    // Google login
+    });    // Google login
     googleLoginBtn.addEventListener("click", async () => {
       try {
         message.textContent = "Redirecting to Google...";
         message.classList.add("info");
-        const { data, error } = await signInWithGoogle();
         
-        if (error) throw error;
+        const { error } = await signInWithGoogle();
         
-        // Don't show success message here since we're redirecting to Google
+        if (error) {
+          message.textContent = error.message;
+          message.classList.add("error");
+          return;
+        }
+        
+        // Don't show additional messages here since we're redirecting to Google
         // The callback page will handle the success state
       } catch (error) {
-        message.textContent = error.message;
+        console.error('Google login error:', error);
+        message.textContent = error.message || "An error occurred during Google login";
         message.classList.add("error");
       }
     });

@@ -56,6 +56,7 @@
 
     <div id="error" class="error"></div>    <script type="module">
         import { resendVerification, checkVerificationStatus } from '../services/auth.js';
+        import { supabase } from '../config/supabase.js';
 
         // UI Elements
         const userEmail = document.getElementById('userEmail');
@@ -87,25 +88,13 @@
             userEmail.textContent = pendingEmail;
         } else {
             userEmail.textContent = 'Email not found';
-        }
-
-        // Check verification status        async function checkVerificationStatus() {
+        }        // Check verification status
+        async function verifyEmailStatus() {
             try {
                 showLoading();
-                const result = await checkVerificationStatus();if (result.success && result.verified) {
-                    statusMessage.textContent = 'Email verified successfully!';
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 2000);
-                    const { error: updateError } = await supabase
-                        .from('profiles')
-                        .update({ email_verified: true })
-                        .eq('id', session.user.id);
-
-                    if (updateError) {
-                        console.error('Profile update error:', updateError);
-                    }
-
+                const result = await checkVerificationStatus();
+                
+                if (result.success && result.verified) {
                     statusMessage.textContent = "Email verified successfully!";
                     statusMessage.classList.add('success');
                     
@@ -151,7 +140,7 @@
 
         // Event Listeners
         resendBtn.addEventListener('click', handleResendVerification);
-        checkBtn.addEventListener('click', checkVerification);
+        checkBtn.addEventListener('click', verifyEmailStatus);
         devModeBtn.addEventListener('click', () => {
             window.location.href = 'dashboard.html';
         });
@@ -191,13 +180,11 @@
                     statusMessage.classList.add('success');
                     devModeBtn.style.display = 'block';
                     return;
-                }
-
-                if (session?.user) {
+                }                if (session?.user) {
                     userEmail.textContent = session.user.email;
                     // Check verification status immediately and then every 5 seconds
-                    await checkVerification();
-                    setInterval(checkVerification, 5000);
+                    await verifyEmailStatus();
+                    setInterval(verifyEmailStatus, 5000);
                 } else if (pendingEmail) {
                     userEmail.textContent = pendingEmail;
                     statusMessage.textContent = "Please verify your email to continue.";
