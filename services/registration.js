@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase.js';
+import { supabase, supabaseAdmin } from '../config/supabase.js';
 import { VERIFY_EMAIL_URL } from '../config/supabase.js';
 
 /**
@@ -155,10 +155,8 @@ export async function register(email, password, username) {
         const usernameValidation = validateUsername(username);
         if (!usernameValidation.isValid) {
             return { success: false, message: usernameValidation.message };
-        }
-
-        // Check for existing account with authenticated client
-        const { data: existingAccount } = await supabase
+        }        // Check for existing account with admin client
+        const { data: existingAccount } = await supabaseAdmin
             .from('profiles')
             .select('email_verified')
             .eq('email', email)
@@ -178,10 +176,8 @@ export async function register(email, password, username) {
             if (!cleanupResult.success) {
                 return cleanupResult;
             }
-        }
-
-        // Check username availability
-        const { data: takenUsername } = await supabase
+        }        // Check username availability using admin client
+        const { data: takenUsername } = await supabaseAdmin
             .from('profiles')
             .select('username')
             .eq('username', username)
@@ -221,23 +217,18 @@ export async function register(email, password, username) {
             throw new Error('Failed to create user account - no user ID returned');
         }
 
-        console.log('Auth user created successfully:', { userId: authData.user.id });
-
-        // Create the user's profile with service role client
-        const { error: profileError } = await supabase
+        console.log('Auth user created successfully:', { userId: authData.user.id });        // Create the user's profile using admin client
+        const { error: profileError } = await supabaseAdmin
             .from('profiles')
             .insert({
                 id: authData.user.id,
                 username: username,
-                email: email
-            })
-            .select()
-            .single();
-
-        if (profileError) {
+                email: email,
+                created_at: new Date().toISOString()
+            });        if (profileError) {
             console.error('Profile creation error:', profileError);
             try {
-                await supabase.auth.admin.deleteUser(authData.user.id);
+                await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
                 console.log('Cleaned up auth user after profile creation failed');
             } catch (cleanupError) {
                 console.error('Failed to cleanup auth user:', cleanupError);
@@ -420,8 +411,8 @@ export const validateResetToken = async (token) => {
  */
 async function cleanupUnverifiedAccount(email) {
     try {
-        // Get the unverified user
-        const { data: profile } = await supabase
+        // Get the unverified user using admin client
+        const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('id, email_verified')
             .eq('email', email)
@@ -429,7 +420,7 @@ async function cleanupUnverifiedAccount(email) {
 
         if (profile && !profile.email_verified) {
             // User exists but is not verified - clean up the account
-            const { error: deleteError } = await supabase.auth.admin.deleteUser(profile.id);
+            const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(profile.id);
             
             if (deleteError) {
                 console.error('Error deleting unverified user:', deleteError);

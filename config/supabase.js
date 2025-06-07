@@ -9,7 +9,7 @@ export const VERIFY_EMAIL_URL = `${SITE_URL}/html/verifyEmail.html`;
 export const RESET_PASSWORD_URL = `${SITE_URL}/html/auth/resetPassword.html`;
 export const AUTH_CALLBACK_URL = `${SITE_URL}/auth/callback`;
 
-// Create and export Supabase client
+// Create the regular client for normal operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         autoRefreshToken: true,
@@ -17,10 +17,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         detectSessionInUrl: true,
         flowType: 'pkce',
         defaultOptions: {
-            emailRedirectTo: VERIFY_EMAIL_URL,
-            data: {
-                source: 'web'
-            }
+            emailRedirectTo: VERIFY_EMAIL_URL
         }
+    }
+});
+
+// Create a service role client for admin operations
+const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jZWhkdm9lYXVzcXJ6am9oZ2xsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODU0NjA4MiwiZXhwIjoyMDY0MTIyMDgyfQ.AkyEVG4Bz_rvUeC52kKTzntkHhgRUYLBuGnkwgv2zHM';
+export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
     }
 });
