@@ -31,6 +31,11 @@ ON public.profiles FOR UPDATE
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
+-- Reset user_activity policies first
+DROP POLICY IF EXISTS "Users can view any user activity" ON public.user_activity;
+DROP POLICY IF EXISTS "Users can update own activity" ON public.user_activity;
+DROP POLICY IF EXISTS "Allow insert on signup" ON public.user_activity;
+
 -- Create base policies for user_activity
 CREATE POLICY "Users can view any user activity"
 ON public.user_activity FOR SELECT
