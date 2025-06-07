@@ -259,42 +259,37 @@ export async function register(email, password, username) {
             return { success: false, message: usernameValidation.message };
         }
 
-        // Check if username is available
-        const usernameAvailability = await checkUsernameAvailability(username);
-        if (!usernameAvailability.isAvailable) {
-            return { success: false, message: usernameAvailability.message };
-        }        // Check if user already exists with this email
-        const { data: existingUser } = await supabase
+        // Check for existing account
+        const { data: existingAccount } = await supabase
             .from('profiles')
             .select('email_verified')
             .eq('email', email)
-            .single();
+            .maybeSingle();
 
-        if (existingUser) {
-            if (!existingUser.email_verified) {
-                return {
-                    success: false,
-                    message: 'This email is already registered but not verified.',
-                    needsVerification: true,
-                    email: email
-                };
-            } else {
+        if (existingAccount) {
+            if (existingAccount.email_verified) {
                 return {
                     success: false,
                     message: 'This email is already registered. Please log in instead.',
                     alreadyRegistered: true
                 };
             }
+            // If not verified, we'll let them try to register again
+            // The old account will be cleaned up by the cleanupUnverifiedAccount function
+            const cleanupResult = await cleanupUnverifiedAccount(email);
+            if (!cleanupResult.success) {
+                return cleanupResult;
+            }
         }
 
-        // Check if username is already taken
-        const { data: existingUsername } = await supabase
+        // Check username availability
+        const { data: takenUsername } = await supabase
             .from('profiles')
             .select('username')
             .eq('username', username)
-            .single();
+            .maybeSingle();
 
-        if (existingUsername) {
+        if (takenUsername) {
             return {
                 success: false,
                 message: 'This username is already taken. Please choose another.'
@@ -306,35 +301,29 @@ export async function register(email, password, username) {
             email,
             password,
             options: {
-                data: {
-                    username
-                },
+                data: { username },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
-        if (authError) throw authError;
+        if (authError) {
+            if (authError.message.includes('User already registered')) {
+                return {
+                    success: false,
+                    message: 'This email is already registered. Please verify your email to continue.',
+                    needsVerification: true,
+                    email: email
+                };
+            }
+            throw authError;
+        }
 
         if (!authData.user) {
             throw new Error('Failed to create user account');
         }
 
-        // Create profile entry without requiring session
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .insert([{ 
-                id: authData.user.id,
-                username,
-                email,
-                email_verified: false,
-                created_at: new Date().toISOString()
-            }]);
-
-        if (profileError) {
-            // If profile creation fails, attempt to clean up the auth user
-            await supabase.auth.admin.deleteUser(authData.user.id);
-            throw profileError;
-        }
+        // Store the email in session storage for verification page
+        sessionStorage.setItem('pendingVerificationEmail', email);
 
         return {
             success: true,
@@ -498,3 +487,38 @@ export const validateResetToken = async (token) => {
         };
     }
 };
+
+/**
+ * Checks and cleans up unverified accounts
+ * @param {string} email - The email to check
+ * @returns {Promise<Object>} Cleanup result
+ */
+async function cleanupUnverifiedAccount(email) {
+    try {
+        // Get the unverified user
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, email_verified')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (profile && !profile.email_verified) {
+            // User exists but is not verified - clean up the account
+            const { error: deleteError } = await supabase.auth.admin.deleteUser(profile.id);
+            
+            if (deleteError) {
+                console.error('Error deleting unverified user:', deleteError);
+                return { success: false, message: 'Failed to clean up old account' };
+            }
+
+            // Wait for deletion to propagate
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return { success: true };
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error in cleanupUnverifiedAccount:', error);
+        return { success: false, message: 'Error checking account status' };
+    }
+}
