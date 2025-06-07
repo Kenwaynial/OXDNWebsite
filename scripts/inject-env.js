@@ -1,9 +1,18 @@
 const fs = require('fs');
 const path = require('path');
 
+console.log('Starting build script...');
+console.log('Current directory:', process.cwd());
+console.log('Script directory:', __dirname);
+
 // Load environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+console.log('Environment variables loaded:', {
+  NEXT_PUBLIC_SUPABASE_URL: supabaseUrl ? 'Set' : 'Not set',
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey ? 'Set' : 'Not set'
+});
 
 // Create the injection script
 const envScript = `
@@ -21,8 +30,12 @@ function injectEnvVariables(filePath) {
 }
 
 // Process all HTML files
-const htmlDir = path.join(__dirname, 'html');
+const htmlDir = path.join(__dirname, '..', 'html');
 function processDirectory(dir) {
+  if (!fs.existsSync(dir)) {
+    console.error(`Directory not found: ${dir}`);
+    return;
+  }
   const files = fs.readdirSync(dir);
   
   files.forEach(file => {
