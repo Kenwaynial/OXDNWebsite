@@ -294,19 +294,23 @@ export async function register(email, password, username) {
                 success: false,
                 message: 'This username is already taken. Please choose another.'
             };
-        }
+        }        console.log('Starting user registration with:', { email, username });
 
-        // Register user with Supabase
+        // Register user with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { username },
+                data: { 
+                    username,
+                    role: 'user'
+                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (authError) {
+            console.error('Auth signup error:', authError);
             if (authError.message.includes('User already registered')) {
                 return {
                     success: false,
@@ -318,9 +322,37 @@ export async function register(email, password, username) {
             throw authError;
         }
 
-        if (!authData.user) {
-            throw new Error('Failed to create user account');
+        if (!authData?.user?.id) {
+            console.error('No user data returned:', authData);
+            throw new Error('Failed to create user account - no user ID returned');
         }
+
+        console.log('Auth user created successfully:', { userId: authData.user.id });
+
+        // Create the user's profile
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+                id: authData.user.id,
+                username: username,
+                email: email,
+                role: 'user'
+            })
+            .select()
+            .single();
+
+        if (profileError) {
+            console.error('Profile creation error:', profileError);
+            // If profile creation fails, clean up the auth user
+            try {
+                await supabase.auth.admin.deleteUser(authData.user.id);
+            } catch (cleanupError) {
+                console.error('Failed to cleanup auth user after profile creation failed:', cleanupError);
+            }
+            throw new Error('Failed to create user profile: ' + profileError.message);
+        }
+
+        console.log('Profile created successfully:', profileData);
 
         // Store the email in session storage for verification page
         sessionStorage.setItem('pendingVerificationEmail', email);
