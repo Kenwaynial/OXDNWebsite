@@ -54,13 +54,8 @@
         <div class="spinner"></div>
     </div>
 
-    <div id="error" class="error"></div>
-
-    <script type="module">
-        import { supabase } from '../config/supabase.js';
-        import { resendVerification } from '../services/auth.js';
-
-        const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    <div id="error" class="error"></div>    <script type="module">
+        import { resendVerification, checkVerificationStatus } from '../services/auth.js';
 
         // UI Elements
         const userEmail = document.getElementById('userEmail');
@@ -86,19 +81,22 @@
             setTimeout(() => {
                 error.classList.remove('show');
             }, 5000);
+        }        // Initialize email display
+        const pendingEmail = sessionStorage.getItem('pendingVerificationEmail');
+        if (pendingEmail) {
+            userEmail.textContent = pendingEmail;
+        } else {
+            userEmail.textContent = 'Email not found';
         }
 
-        // Check verification status
-        async function checkVerification() {
+        // Check verification status        async function checkVerificationStatus() {
             try {
                 showLoading();
-                
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
-                if (sessionError) throw sessionError;
-
-                if (session?.user?.email_confirmed_at) {
-                    // Update profile email_verified status
+                const result = await checkVerificationStatus();if (result.success && result.verified) {
+                    statusMessage.textContent = 'Email verified successfully!';
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
                     const { error: updateError } = await supabase
                         .from('profiles')
                         .update({ email_verified: true })

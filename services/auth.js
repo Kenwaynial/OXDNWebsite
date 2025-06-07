@@ -119,4 +119,73 @@ export const signUp = async (email, password, username) => {
       message: error.message || 'An error occurred during registration'
     };
   }
+}
+
+/**
+ * Resends verification email to user
+ * @param {string} email - User's email address
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const resendVerification = async (email) => {
+    try {
+        const { error } = await supabase.auth.resend({
+            type: 'signup',
+            email,
+            options: {
+                emailRedirectTo: VERIFY_EMAIL_URL
+            }
+        });
+
+        if (error) throw error;
+
+        return {
+            success: true,
+            message: 'Verification email sent! Please check your inbox.'
+        };
+    } catch (error) {
+        console.error('Error sending verification:', error);
+        return {
+            success: false,
+            message: error.message || 'Failed to send verification email'
+        };
+    }
+};
+
+/**
+ * Checks user's email verification status
+ * @returns {Promise<Object>} Verification status
+ */
+export const checkVerificationStatus = async () => {
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+
+        if (!session?.user) {
+            return {
+                success: false,
+                message: 'No active session found'
+            };
+        }
+
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('email_verified')
+            .eq('id', session.user.id)
+            .single();
+
+        if (profileError) throw profileError;
+
+        return {
+            success: true,
+            verified: session.user.email_confirmed_at && profile?.email_verified,
+            message: session.user.email_confirmed_at ? 'Email verified!' : 'Email not verified'
+        };
+    } catch (error) {
+        console.error('Error checking verification:', error);
+        return {
+            success: false,
+            message: error.message || 'Failed to check verification status'
+        };
+    }
 };
