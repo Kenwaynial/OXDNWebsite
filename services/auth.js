@@ -83,20 +83,16 @@ export const signUp = async (email, password, username) => {
       if (existing.email === email) {
         return { success: false, message: 'Email is already registered' };
       }
-    }
-
-    // Proceed with signup - auth.users will be created first
+    }    // Proceed with signup - auth.users will be created first
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          username,
+          username, // Only pass essential fields
           email,
           role: 'user',
-          email_verified: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          email_verified: false
         },
         emailRedirectTo: VERIFY_EMAIL_URL
       }
