@@ -294,17 +294,11 @@ export async function register(email, password, username) {
                 success: false,
                 message: 'This username is already taken. Please choose another.'
             };
-        }        console.log('Starting user registration with:', { email, username });
-
-        // Register user with Supabase Auth
+        }        console.log('Starting user registration with:', { email, username });        // First create the auth user with minimal data
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { 
-                    username,
-                    role: 'user'
-                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
@@ -327,19 +321,14 @@ export async function register(email, password, username) {
             throw new Error('Failed to create user account - no user ID returned');
         }
 
-        console.log('Auth user created successfully:', { userId: authData.user.id });
-
-        // Create the user's profile
+        console.log('Auth user created successfully:', { userId: authData.user.id });        // Create the user's profile
         const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .insert({
                 id: authData.user.id,
                 username: username,
-                email: email,
-                role: 'user'
-            })
-            .select()
-            .single();
+                email: email
+            });
 
         if (profileError) {
             console.error('Profile creation error:', profileError);
