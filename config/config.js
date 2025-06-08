@@ -3,6 +3,7 @@
 export const config = {
     supabaseUrl: window.__SUPABASE_URL__ || 'https://ncehdvoeausqrzjohgll.supabase.co',
     supabaseAnonKey: window.__SUPABASE_ANON_KEY__,
+    supabaseServiceKey: window.__SUPABASE_SERVICE_KEY__, // For admin operations
     siteUrl: window.location.origin || 'https://oxdn.vercel.app',
     get verifyEmailUrl() {
         return `${this.siteUrl}/html/verifyEmail.html`;
