@@ -55,65 +55,9 @@
 
         <div id="message" class="message"></div>    </main>    <script type="module">
         import { register } from '../services/registration.js';
-        import { resendVerificationEmail, validateUsernameRealTime, validateEmailRealTime, checkPasswordStrength } from '../services/registration.js';
+        import { resendVerificationEmail } from '../services/registration.js';
 
-        // Real-time validation setup
-        const usernameInput = document.getElementById('username');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-
-        // Add validation feedback to inputs
-        function addValidationFeedback(input, message, isValid) {
-            // Remove existing feedback
-            const existingFeedback = input.parentNode.querySelector('.validation-feedback');
-            if (existingFeedback) {
-                existingFeedback.remove();
-            }
-
-            // Add new feedback
-            const feedback = document.createElement('div');
-            feedback.className = `validation-feedback ${isValid ? 'valid' : 'invalid'}`;
-            feedback.textContent = message;
-            input.parentNode.appendChild(feedback);
-        }
-
-        // Username validation
-        let usernameTimeout;
-        usernameInput.addEventListener('input', (e) => {
-            clearTimeout(usernameTimeout);
-            const username = e.target.value.trim();
-            
-            if (username.length < 3) {
-                addValidationFeedback(e.target, 'Too short', false);
-                return;
-            }
-
-            // Show checking state
-            addValidationFeedback(e.target, 'Checking...', false);
-            
-            usernameTimeout = setTimeout(async () => {
-                const result = await validateUsernameRealTime(username);
-                addValidationFeedback(e.target, result.message, result.isValid);
-            }, 500);
-        });
-
-        // Email validation
-        emailInput.addEventListener('input', (e) => {
-            const email = e.target.value.trim();
-            if (email.length === 0) return;
-            
-            const result = validateEmailRealTime(email);
-            addValidationFeedback(e.target, result.message, result.isValid);
-        });
-
-        // Password strength indicator
-        passwordInput.addEventListener('input', (e) => {
-            const password = e.target.value;
-            if (password.length === 0) return;
-            
-            const result = checkPasswordStrength(password);
-            addValidationFeedback(e.target, result.message, result.isValid);
-        });
+        // Simplified registration without real-time validation for now
 
         window.resendVerification = async (email) => {
             const message = document.getElementById('message');
