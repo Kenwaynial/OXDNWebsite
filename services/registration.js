@@ -155,24 +155,8 @@ export async function register(email, password, username) {
         const usernameValidation = validateUsername(username);
         if (!usernameValidation.isValid) {
             return { success: false, message: usernameValidation.message };
-        }        // Check for existing account
-        const { data: existingAccount } = await supabase
-            .from('profiles')
-            .select('email_verified')
-            .eq('email', email)
-            .maybeSingle();
-
-        if (existingAccount) {
-            console.log('Found existing account:', existingAccount);
-            if (existingAccount.email_verified) {
-                return {
-                    success: false,
-                    message: 'This email is already registered. Please log in instead.',
-                    alreadyRegistered: true
-                };
-            }
-            // For unverified accounts, let the signup process handle it
-        }
+        }        // Skip email existence check since auth.users handles duplicate emails
+        // Just check username availability
 
         // Check username availability
         const { data: takenUsername } = await supabase
@@ -214,17 +198,14 @@ export async function register(email, password, username) {
         }        if (!authData?.user?.id) {
             console.error('No user data returned:', authData);
             throw new Error('Failed to create user account - no user ID returned');
-        }        console.log('Auth user created successfully:', { userId: authData.user.id });
-
-        // Create the user's profile using regular client (not admin)
+        }        console.log('Auth user created successfully:', { userId: authData.user.id });        // Create the user's profile using regular client (not admin)
         const { error: profileError } = await supabase
             .from('profiles')
             .insert({
                 id: authData.user.id,
                 username: username,
-                email: email,
                 created_at: new Date().toISOString()
-            });        if (profileError) {
+            });if (profileError) {
             console.error('Profile creation error:', profileError);
             try {
                 await supabase.auth.signOut(); // Sign out instead of admin delete
