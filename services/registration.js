@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from '../config/supabase.js';
+import { supabase } from '../config/supabase.js';
 import { VERIFY_EMAIL_URL } from '../config/supabase.js';
 
 /**
@@ -56,82 +56,11 @@ const validatePassword = (password) => {
             message: 'Password must be at least 6 characters long'
         };
     }
-    if (!/\d/.test(password)) {
-        return {
-            isValid: false,
-            message: 'Password must contain at least one number'
-        };
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        return {
-            isValid: false,
-            message: 'Password must contain at least one special character'
-        };
-    }
     return { isValid: true };
 };
 
 /**
- * Checks if a username is available
- * @param {string} username - The username to check
- * @returns {Promise<Object>} Object containing isAvailable and message
- */
-export const checkUsernameAvailability = async (username) => {
-    try {
-        // Direct database query instead of RPC
-        const { data: existingUsers, error } = await supabase
-            .from('profiles')
-            .select('username')
-            .ilike('username', username)
-            .limit(1);
-
-        if (error) throw error;
-
-        return {
-            isAvailable: !existingUsers?.length,
-            message: existingUsers?.length ? 'Username is already taken' : 'Username is available'
-        };
-    } catch (error) {
-        console.error('Username check error:', error);
-        return { isAvailable: false, message: 'Error checking username' };
-    }
-};
-
-/**
- * Checks if an email is available
- * @param {string} email - The email to check
- * @returns {Promise<Object>} Object containing isAvailable and message
- */
-export const checkEmailAvailability = async (email) => {
-    try {
-        const { data: existingUsers, error } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('email', email)
-            .limit(1);
-
-        if (error) {
-            console.error('Email check error:', error);
-            throw error;
-        }
-
-        return {
-            isAvailable: !existingUsers?.length,
-            message: existingUsers?.length ? 'Email is already registered' : 'Email is available'
-        };
-    } catch (error) {
-        console.error('Email availability check failed:', error);
-        return {
-            isAvailable: false,
-            message: 'Error checking email availability'
-        };
-    }
-};
-
-// Main registration function is now handled by register()
-
-/**
- * Register a new user
+ * Register a new user - Simple approach that only creates auth user
  * @param {string} email - User's email
  * @param {string} password - User's password
  * @param {string} username - User's username
@@ -139,7 +68,7 @@ export const checkEmailAvailability = async (email) => {
  */
 export async function register(email, password, username) {
     try {
-        console.log('Starting registration validation for:', { email, username });
+        console.log('Starting registration for:', { email, username });
         
         // Validate input
         const emailValidation = validateEmail(email);
@@ -155,94 +84,66 @@ export async function register(email, password, username) {
         const usernameValidation = validateUsername(username);
         if (!usernameValidation.isValid) {
             return { success: false, message: usernameValidation.message };
-        }        // Skip email existence check since auth.users handles duplicate emails
-        // Just check username availability
+        }
 
-        // Check username availability
-        const { data: takenUsername } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('username', username)
-            .maybeSingle();
+        console.log('Validation passed, creating auth user...');
 
-        if (takenUsername) {
-            return {
-                success: false,
-                message: 'This username is already taken. Please choose another.'
-            };
-        }        console.log('All validations passed, creating auth user...');
-
-        // Create the auth user ONLY - no profile creation during signup
+        // Create auth user with email verification
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
+                data: {
+                    username: username
+                },
                 emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (authError) {
             console.error('Auth signup error:', authError);
-            if (authError.message.includes('User already registered') || authError.message.includes('already been registered')) {
+            
+            if (authError.message.includes('User already registered') || 
+                authError.message.includes('already been registered')) {
                 return {
                     success: false,
-                    message: 'This email is already registered. Please verify your email to continue.',
+                    message: 'This email is already registered. Please check your email for verification or try logging in.',
                     needsVerification: true,
                     email: email
                 };
             }
-            throw authError;
+            
+            return { success: false, message: authError.message };
         }
 
-        if (!authData?.user?.id) {
-            console.error('No user data returned:', authData);
-            throw new Error('Failed to create user account - no user ID returned');
+        if (!authData?.user) {
+            return { success: false, message: 'Registration failed - no user data returned' };
         }
 
-        console.log('Auth user created successfully:', { userId: authData.user.id });
+        console.log('Auth user created successfully!', authData.user.id);
 
-        // Wait a moment for auth user to be fully created
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // NOW create the profile after auth user exists
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-                id: authData.user.id,
-                username: username,
-                created_at: new Date().toISOString()
-            });if (profileError) {
-            console.error('Profile creation error:', profileError);
-            try {
-                await supabase.auth.signOut(); // Sign out instead of admin delete
-                console.log('Signed out user after profile creation failed');
-            } catch (cleanupError) {
-                console.error('Failed to sign out user:', cleanupError);
-            }
-            throw new Error('Failed to create user profile: ' + profileError.message);
-        }
-
-        console.log('Profile created successfully');
-
-        // Store the email in session storage for verification page
-        sessionStorage.setItem('pendingVerificationEmail', email);
+        // Store username temporarily for later use
+        sessionStorage.setItem('pendingUsername', username);
+        sessionStorage.setItem('pendingUserId', authData.user.id);
 
         return {
             success: true,
-            message: 'Registration successful! Please check your email to verify your account.'
+            message: 'Registration successful! Please check your email to verify your account.',
+            userId: authData.user.id
         };
+
     } catch (error) {
         console.error('Registration error:', error);
         return {
             success: false,
-            message: error.message || 'Failed to create account'
+            message: error.message || 'Registration failed'
         };
     }
 }
 
 /**
- * Resends verification email
- * @param {string} email - User's email
+ * Resends verification email to user
+ * @param {string} email - User's email address
  * @returns {Promise<Object>} Result of the operation
  */
 export const resendVerificationEmail = async (email) => {
@@ -259,168 +160,178 @@ export const resendVerificationEmail = async (email) => {
 
         return {
             success: true,
-            message: 'Verification email sent! Please check your email.'
+            message: 'Verification email sent! Please check your inbox.'
         };
     } catch (error) {
-        console.error('Error resending verification:', error);
+        console.error('Error sending verification:', error);
         return {
             success: false,
-            message: error.message || 'Failed to resend verification email'
+            message: error.message || 'Failed to send verification email'
         };
     }
 };
 
 /**
- * Completes the registration process after email verification
- * @param {string} userId - The user's ID
+ * Create user profile after email verification
+ * @param {string} userId - User's ID
+ * @param {string} username - User's username
  * @returns {Promise<Object>} Result of the operation
  */
-export const completeRegistration = async (userId) => {
+export const createUserProfile = async (userId, username) => {
     try {
-        // Update email verification status
-        const { error: updateError } = await supabase
+        const { error } = await supabase
             .from('profiles')
-            .update({ email_verified: true })
-            .eq('id', userId);
+            .insert({
+                id: userId,
+                username: username,
+                created_at: new Date().toISOString()
+            });
 
-        if (updateError) throw updateError;
-
-        // Initialize user stats
-        const { error: statsError } = await supabase
-            .from('user_stats')
-            .upsert([{ user_id: userId }]);
-
-        if (statsError) throw statsError;
+        if (error) throw error;
 
         return {
             success: true,
-            message: 'Registration completed successfully!'
+            message: 'Profile created successfully!'
         };
     } catch (error) {
-        console.error('Error completing registration:', error);
+        console.error('Error creating profile:', error);
         return {
             success: false,
-            message: error.message || 'Failed to complete registration'
+            message: error.message || 'Failed to create profile'
         };
     }
 };
 
 /**
- * Sign in with Google OAuth
- * @returns {Promise<Object>} OAuth result
+ * Check if username is available
+ * @param {string} username - Username to check
+ * @returns {Promise<boolean>} True if available
  */
-export const signInWithGoogle = async () => {
+export const isUsernameAvailable = async (username) => {
     try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${SITE_URL}/html/auth/callback.html`,
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent'
-                }
-            }
-        });    
-        
-        if (error) {
-            console.error('Google sign-in error:', error);
-            throw error;
-        }
-
-        // Start OAuth flow
-        if (data?.url) {
-            sessionStorage.setItem('oauth_start_time', Date.now().toString());
-            window.location.href = data.url;
-            return { data, error: null };
-        } else {
-            throw new Error('Failed to start Google sign-in process');
-        }
-    } catch (error) {
-        console.error('Google sign-in error:', error);
-        return { data: null, error };
-    }
-};
-
-/**
- * Reset password email flow
- * @param {string} email - User's email
- * @returns {Promise<Object>} Reset password result
- */
-export const resetPassword = async (email) => {
-    try {
-        const timestamp = Date.now();
-        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${SITE_URL}/html/auth/resetPassword.html?t=${timestamp}`
-        });
-
-        if (error) throw error;
-
-        return { 
-            data, 
-            error: null,
-            message: 'Password reset link sent! Link expires in 5 minutes.' 
-        };
-    } catch (error) {
-        return { 
-            data: null, 
-            error,
-            message: error.message || 'Failed to send reset link' 
-        };
-    }
-};
-
-/**
- * Validate reset password token
- * @param {string} token - Reset token to validate
- * @returns {Promise<Object>} Validation result
- */
-export const validateResetToken = async (token) => {
-    try {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        
-        if (error) throw error;
-        
-        return { isValid: true, error: null };
-    } catch (error) {
-        console.error('Token validation error:', error);
-        return { 
-            isValid: false, 
-            error: error.message || 'Invalid or expired reset link.'
-        };
-    }
-};
-
-/**
- * Checks and cleans up unverified accounts
- * @param {string} email - The email to check
- * @returns {Promise<Object>} Cleanup result
- */
-async function cleanupUnverifiedAccount(email) {
-    try {
-        // Get the unverified user using admin client
-        const { data: profile } = await supabaseAdmin
+        const { data, error } = await supabase
             .from('profiles')
-            .select('id, email_verified')
-            .eq('email', email)
-            .maybeSingle();
+            .select('username')
+            .eq('username', username)
+            .limit(1);
 
-        if (profile && !profile.email_verified) {
-            // User exists but is not verified - clean up the account
-            const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(profile.id);
-            
-            if (deleteError) {
-                console.error('Error deleting unverified user:', deleteError);
-                return { success: false, message: 'Failed to clean up old account' };
-            }
+        if (error) throw error;
+        
+        return data.length === 0;
+    } catch (error) {
+        console.error('Error checking username:', error);
+        return false;
+    }
+};
 
-            // Wait for deletion to propagate
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            return { success: true };
+/**
+ * Real-time username validation with availability check
+ * @param {string} username - Username to validate
+ * @returns {Promise<Object>} Validation result with availability
+ */
+export const validateUsernameRealTime = async (username) => {
+    // First check format
+    const formatValidation = validateUsername(username);
+    if (!formatValidation.isValid) {
+        return formatValidation;
+    }
+
+    // Then check availability
+    const isAvailable = await isUsernameAvailable(username);
+    
+    return {
+        isValid: isAvailable,
+        message: isAvailable ? 'Username is available!' : 'Username is already taken'
+    };
+};
+
+/**
+ * Real-time email validation
+ * @param {string} email - Email to validate
+ * @returns {Object} Validation result
+ */
+export const validateEmailRealTime = (email) => {
+    return validateEmail(email);
+};
+
+/**
+ * Real-time password strength checker
+ * @param {string} password - Password to check
+ * @returns {Object} Password strength result
+ */
+export const checkPasswordStrength = (password) => {
+    if (!password) {
+        return { strength: 'none', message: 'Password is required', color: '#ff4444' };
+    }
+
+    let score = 0;
+    let feedback = [];
+
+    // Length check
+    if (password.length >= 8) {
+        score += 2;
+    } else if (password.length >= 6) {
+        score += 1;
+        feedback.push('Consider making it longer');
+    } else {
+        feedback.push('Too short (minimum 6 characters)');
+    }
+
+    // Character variety
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
+
+    // Determine strength
+    let strength, message, color;
+    
+    if (score < 3) {
+        strength = 'weak';
+        message = 'Weak password';
+        color = '#ff4444';
+    } else if (score < 5) {
+        strength = 'medium';
+        message = 'Good password';
+        color = '#ffaa00';
+    } else {
+        strength = 'strong';
+        message = 'Strong password';
+        color = '#44ff44';
+    }
+
+    if (feedback.length > 0) {
+        message += ' - ' + feedback.join(', ');
+    }
+
+    return { strength, message, color, isValid: score >= 2 };
+};
+
+/**
+ * Get user registration status
+ * @param {string} email - User's email
+ * @returns {Promise<Object>} Registration status
+ */
+export const getUserRegistrationStatus = async (email) => {
+    try {
+        // Check if user exists in auth
+        const { data: users, error } = await supabase.auth.admin.listUsers();
+        
+        if (error) throw error;
+        
+        const user = users.users.find(u => u.email === email);
+        
+        if (!user) {
+            return { exists: false, verified: false };
         }
 
-        return { success: true };
+        return {
+            exists: true,
+            verified: user.email_confirmed_at !== null,
+            user: user
+        };
     } catch (error) {
-        console.error('Error in cleanupUnverifiedAccount:', error);
-        return { success: false, message: 'Error checking account status' };
+        console.error('Error checking registration status:', error);
+        return { exists: false, verified: false, error: error.message };
     }
-}
+};
