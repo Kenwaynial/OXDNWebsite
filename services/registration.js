@@ -155,8 +155,8 @@ export async function register(email, password, username) {
         const usernameValidation = validateUsername(username);
         if (!usernameValidation.isValid) {
             return { success: false, message: usernameValidation.message };
-        }        // Check for existing account with admin client
-        const { data: existingAccount } = await supabaseAdmin
+        }        // Check for existing account
+        const { data: existingAccount } = await supabase
             .from('profiles')
             .select('email_verified')
             .eq('email', email)
@@ -171,13 +171,11 @@ export async function register(email, password, username) {
                     alreadyRegistered: true
                 };
             }
-            // Clean up unverified account
-            const cleanupResult = await cleanupUnverifiedAccount(email);
-            if (!cleanupResult.success) {
-                return cleanupResult;
-            }
-        }        // Check username availability using admin client
-        const { data: takenUsername } = await supabaseAdmin
+            // For unverified accounts, let the signup process handle it
+        }
+
+        // Check username availability
+        const { data: takenUsername } = await supabase
             .from('profiles')
             .select('username')
             .eq('username', username)
@@ -215,10 +213,10 @@ export async function register(email, password, username) {
         }        if (!authData?.user?.id) {
             console.error('No user data returned:', authData);
             throw new Error('Failed to create user account - no user ID returned');
-        }
+        }        console.log('Auth user created successfully:', { userId: authData.user.id });
 
-        console.log('Auth user created successfully:', { userId: authData.user.id });        // Create the user's profile using admin client
-        const { error: profileError } = await supabaseAdmin
+        // Create the user's profile using regular client (not admin)
+        const { error: profileError } = await supabase
             .from('profiles')
             .insert({
                 id: authData.user.id,
@@ -228,15 +226,15 @@ export async function register(email, password, username) {
             });        if (profileError) {
             console.error('Profile creation error:', profileError);
             try {
-                await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-                console.log('Cleaned up auth user after profile creation failed');
+                await supabase.auth.signOut(); // Sign out instead of admin delete
+                console.log('Signed out user after profile creation failed');
             } catch (cleanupError) {
-                console.error('Failed to cleanup auth user:', cleanupError);
+                console.error('Failed to sign out user:', cleanupError);
             }
             throw new Error('Failed to create user profile: ' + profileError.message);
         }
 
-        console.log('Profile created successfully:', profileData);
+        console.log('Profile created successfully');
 
         // Store the email in session storage for verification page
         sessionStorage.setItem('pendingVerificationEmail', email);
