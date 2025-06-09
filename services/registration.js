@@ -172,21 +172,18 @@ export async function register(email, password, username) {
             };
         }        console.log('All validations passed, creating auth user...');
 
-        // Create the auth user with minimal data - let Supabase handle auth.users creation
+        // Create the auth user ONLY - no profile creation during signup
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                emailRedirectTo: VERIFY_EMAIL_URL,
-                data: {
-                    username: username // Pass username in metadata
-                }
+                emailRedirectTo: VERIFY_EMAIL_URL
             }
         });
 
         if (authError) {
             console.error('Auth signup error:', authError);
-            if (authError.message.includes('User already registered')) {
+            if (authError.message.includes('User already registered') || authError.message.includes('already been registered')) {
                 return {
                     success: false,
                     message: 'This email is already registered. Please verify your email to continue.',
@@ -195,10 +192,19 @@ export async function register(email, password, username) {
                 };
             }
             throw authError;
-        }        if (!authData?.user?.id) {
+        }
+
+        if (!authData?.user?.id) {
             console.error('No user data returned:', authData);
             throw new Error('Failed to create user account - no user ID returned');
-        }        console.log('Auth user created successfully:', { userId: authData.user.id });        // Create the user's profile using regular client (not admin)
+        }
+
+        console.log('Auth user created successfully:', { userId: authData.user.id });
+
+        // Wait a moment for auth user to be fully created
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // NOW create the profile after auth user exists
         const { error: profileError } = await supabase
             .from('profiles')
             .insert({
