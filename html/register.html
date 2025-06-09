@@ -76,10 +76,10 @@
                 message.className = 'message error';
                 message.textContent = error.message;
             }
-        };
-
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        };        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            console.log('🎯 DEBUG: Form submission started');
+            
             const message = document.getElementById('message');
             const button = e.target.querySelector('button');
             message.className = 'message';
@@ -89,18 +89,36 @@
             try {
                 const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
-                const username = document.getElementById('username').value.trim();                message.textContent = 'Creating your account...';                const result = await register(
+                const username = document.getElementById('username').value.trim();
+                
+                console.log('🎯 DEBUG: Form data collected:', { 
+                    email, 
+                    username, 
+                    passwordLength: password.length 
+                });
+                
+                message.textContent = 'Creating your account...';
+                
+                console.log('🎯 DEBUG: Calling register function...');
+                const result = await register(
                     email,
                     password,
                     username
-                );if (result.success) {
+                );
+                
+                console.log('🎯 DEBUG: Register function returned:', result);
+
+                if (result.success) {
+                    console.log('🎯 DEBUG: Registration successful, updating UI...');
                     message.className = 'message success';
                     message.innerHTML = `${result.message}<div class="spinner"></div>`;
                     e.target.reset();
                     setTimeout(() => {
+                        console.log('🎯 DEBUG: Redirecting to verification page...');
                         window.location.href = 'verifyEmail.html';
                     }, 2000);
                 } else if (result.needsVerification) {
+                    console.log('🎯 DEBUG: Needs verification, showing resend option...');
                     message.className = 'message warning';
                     message.innerHTML = `
                         ${result.message}<br>
@@ -109,19 +127,26 @@
                         </button>
                     `;
                 } else if (result.alreadyRegistered) {
+                    console.log('🎯 DEBUG: Already registered, showing login option...');
                     message.className = 'message info';
                     message.innerHTML = `
                         ${result.message}<br>
                         <a href="login.html" class="button2">Go to Login</a>
                     `;
                 } else {
+                    console.log('🎯 DEBUG: Registration failed:', result.message);
                     throw new Error(result.message);
                 }
             } catch (error) {
+                console.error('🎯 DEBUG: Form submission error:', {
+                    message: error.message,
+                    stack: error.stack,
+                    fullError: error
+                });
                 message.className = 'message error';
                 message.textContent = error.message;
                 button.disabled = false;
             }
-        });    </script>
+        });</script>
 </body>
 </html>

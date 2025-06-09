@@ -1,6 +1,11 @@
 import { supabase } from '../config/supabase.js';
 import { VERIFY_EMAIL_URL } from '../config/supabase.js';
 
+// Debug the imports immediately
+console.log('🔧 DEBUG: Registration.js loaded');
+console.log('🔧 DEBUG: Supabase client imported:', !!supabase);
+console.log('🔧 DEBUG: VERIFY_EMAIL_URL imported:', VERIFY_EMAIL_URL);
+
 /**
  * Validates a username string
  * @param {string} username - The username to validate
@@ -68,47 +73,82 @@ const validatePassword = (password) => {
  */
 export async function register(email, password, username) {
     try {
-        console.log('Starting MINIMAL registration for:', { email, username });
+        console.log('🚀 DEBUG: Starting MINIMAL registration process');
+        console.log('🚀 DEBUG: Input parameters:', { 
+            email: email, 
+            username: username, 
+            passwordLength: password?.length || 0 
+        });
         
         // Basic validation only
+        console.log('🔍 DEBUG: Starting validation...');
         if (!email || !email.includes('@')) {
+            console.log('❌ DEBUG: Email validation failed');
             return { success: false, message: 'Please enter a valid email address' };
         }
+        console.log('✅ DEBUG: Email validation passed');
         
         if (!password || password.length < 6) {
+            console.log('❌ DEBUG: Password validation failed');
             return { success: false, message: 'Password must be at least 6 characters long' };
         }
+        console.log('✅ DEBUG: Password validation passed');
         
         if (!username || username.length < 3) {
+            console.log('❌ DEBUG: Username validation failed');
             return { success: false, message: 'Username must be at least 3 characters long' };
         }
+        console.log('✅ DEBUG: Username validation passed');
 
-        console.log('Validation passed, creating auth user with MINIMAL options...');
+        console.log('🔧 DEBUG: Validation complete, preparing Supabase signup...');
+        console.log('🔧 DEBUG: Supabase client status:', !!supabase);
+        console.log('🔧 DEBUG: Supabase auth status:', !!supabase?.auth);
 
         // Create auth user with ABSOLUTE MINIMUM configuration
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        console.log('📡 DEBUG: Calling supabase.auth.signUp...');
+        const signUpPayload = {
             email: email,
             password: password
             // NO options, NO metadata, NO redirects - just the bare minimum
-        });
+        };
+        console.log('📡 DEBUG: SignUp payload:', signUpPayload);
+
+        const { data: authData, error: authError } = await supabase.auth.signUp(signUpPayload);
+
+        console.log('📡 DEBUG: Supabase signUp response received');
+        console.log('📡 DEBUG: Auth data:', authData);
+        console.log('📡 DEBUG: Auth error:', authError);
 
         if (authError) {
-            console.error('Auth signup error:', authError);
+            console.error('❌ DEBUG: Auth signup error details:', {
+                message: authError.message,
+                status: authError.status,
+                code: authError.code,
+                details: authError
+            });
             return { success: false, message: authError.message };
         }
 
         if (!authData?.user) {
+            console.error('❌ DEBUG: No user data returned from signup');
+            console.log('❌ DEBUG: Full authData:', authData);
             return { success: false, message: 'Registration failed - no user data returned' };
         }
 
-        console.log('✅ Auth user created successfully!', authData.user.id);
+        console.log('✅ DEBUG: Auth user created successfully!');
+        console.log('✅ DEBUG: User ID:', authData.user.id);
+        console.log('✅ DEBUG: User email:', authData.user.email);
+        console.log('✅ DEBUG: User email confirmed:', authData.user.email_confirmed_at);
 
         // Store data locally for now
+        console.log('💾 DEBUG: Storing registration data in sessionStorage...');
         sessionStorage.setItem('registrationSuccess', 'true');
         sessionStorage.setItem('pendingUsername', username);
         sessionStorage.setItem('pendingUserId', authData.user.id);
         sessionStorage.setItem('pendingEmail', email);
+        console.log('💾 DEBUG: SessionStorage data saved');
 
+        console.log('🎉 DEBUG: Registration process completed successfully!');
         return {
             success: true,
             message: 'Registration successful! Please check your email to verify your account.',
@@ -116,7 +156,12 @@ export async function register(email, password, username) {
         };
 
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('💥 DEBUG: Unexpected error in registration function:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+            fullError: error
+        });
         return {
             success: false,
             message: error.message || 'Registration failed'
