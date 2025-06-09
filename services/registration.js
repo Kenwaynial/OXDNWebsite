@@ -186,16 +186,17 @@ export async function register(email, password, username) {
                 success: false,
                 message: 'This username is already taken. Please choose another.'
             };
-        }
+        }        console.log('All validations passed, creating auth user...');
 
-        console.log('All validations passed, creating auth user...');
-
-        // Create the auth user with minimal data
+        // Create the auth user with minimal data - let Supabase handle auth.users creation
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                emailRedirectTo: VERIFY_EMAIL_URL
+                emailRedirectTo: VERIFY_EMAIL_URL,
+                data: {
+                    username: username // Pass username in metadata
+                }
             }
         });
 
